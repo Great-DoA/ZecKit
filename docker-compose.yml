@@ -1,0 +1,24 @@
+version: '3.9'
+
+# ZecDev Launchpad - Main Docker Compose Configuration
+# Milestone 1: Zebra-only devnet setup
+
+services:
+  # Zebra regtest node
+  zebra:
+    extends:
+      file: docker/compose/zebra.yml
+      service: zebra
+  
+  # Faucet service - PLACEHOLDER for M2
+  # Uncomment when implementing faucet in Milestone 2
+  # faucet:
+  #   extends:
+  #     file: docker/compose/faucet.yml
+  #     service: faucet
+  #   depends_on:
+  #     zebra:
+  #       condition: service_healthy
+
+# Network is defined in zebra.yml
+# Volumes are defined in zebra.yml
