@@ -1,0 +1,88 @@
+name: Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  smoke-test:
+    name: Zebra Smoke Test
+    runs-on: self-hosted  # Runs on your WSL runner
+    
+    # Timeout after 10 minutes (devnet should be up much faster)
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check Docker availability
+        run: |
+          docker --version
+          docker compose version
+      
+      - name: Clean up previous runs
+        run: |
+          echo "Cleaning up any previous containers..."
+          docker compose down -v --remove-orphans || true
+          docker system prune -f || true
+      
+      - name: Start ZecDev devnet
+        run: |
+          echo "Starting Zebra regtest node..."
+          docker compose up -d
+      
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for Zebra to be ready..."
+          chmod +x docker/healthchecks/check-zebra.sh
+          ./docker/healthchecks/check-zebra.sh
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke test suite..."
+          chmod +x tests/smoke/basic-health.sh
+          ./tests/smoke/basic-health.sh
+      
+      - name: Collect Zebra logs
+        if: always()
+        run: |
+          echo "Collecting container logs..."
+          mkdir -p logs
+          docker compose logs zebra > logs/zebra.log 2>&1 || true
+          docker ps -a > logs/containers.log 2>&1 || true
+          docker network ls > logs/networks.log 2>&1 || true
+      
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs-${{ github.run_number }}
+          path: logs/
+          retention-days: 7
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Tearing down devnet..."
+          docker compose down -v
+          
+          echo "Final cleanup..."
+          docker system prune -f || true
+      
+      - name: Test summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Smoke Test Execution Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✓ Status: PASSED"
+          else
+            echo "✗ Status: FAILED"
+          fi
