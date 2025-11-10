@@ -30,6 +30,10 @@ jobs:
         run: |
           echo "Cleaning up any previous containers..."
           docker compose down -v --remove-orphans || true
+          docker stop zecdev-zebra 2>/dev/null || true
+          docker rm -f zecdev-zebra 2>/dev/null || true
+          docker volume rm zecdev-zebra-data 2>/dev/null || true
+          docker network rm zecdev-network 2>/dev/null || true
           docker system prune -f || true
       
       - name: Start ZecDev devnet
