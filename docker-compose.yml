@@ -1,5 +1,5 @@
 # ZecKit - Main Docker Compose Configuration
-# Milestone 2: Zebra + Faucet
+# Milestone 2: Zebra + Faucet + Optional Backends
 
 services:
   zebra:
@@ -93,6 +93,94 @@ services:
     
     # Restart policy
     restart: unless-stopped
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # Optional Backend Services (start with: zecdev up --backend lwd|zaino)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  lightwalletd:
+    image: electriccoinco/lightwalletd:latest
+    container_name: zecdev-lightwalletd
+    
+    networks:
+      - zecdev
+    
+    # Port mappings
+    ports:
+      - "127.0.0.1:9067:9067"  # gRPC
+    
+    # Environment variables
+    environment:
+      - ZCASH_CONF_PATH=/dev/null
+      - LOG_LEVEL=info
+    
+    # Command line arguments
+    command:
+      - "--grpc-bind-addr=0.0.0.0:9067"
+      - "--zcash-conf-path=/dev/null"
+      - "--log-level=info"
+      - "--no-tls-very-insecure=true"
+      - "--zcash-rpc-host=zebra"
+      - "--zcash-rpc-port=8232"
+    
+    # Wait for Zebra
+    depends_on:
+      zebra:
+        condition: service_healthy
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:9067", "||", "exit", "0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Only start when explicitly requested
+    profiles:
+      - lwd
+      - backends
+
+  zaino:
+    image: zingolabs/zaino:latest
+    container_name: zecdev-zaino
+    
+    networks:
+      - zecdev
+    
+    # Port mappings
+    ports:
+      - "127.0.0.1:9067:9067"  # gRPC (same port as lwd for compatibility)
+    
+    # Environment variables
+    environment:
+      - ZEBRA_URL=http://zebra:8232
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    
+    # Wait for Zebra
+    depends_on:
+      zebra:
+        condition: service_healthy
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9067/health", "||", "exit", "0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Only start when explicitly requested
+    profiles:
+      - zaino
+      - backends
 
 networks:
   zecdev:
