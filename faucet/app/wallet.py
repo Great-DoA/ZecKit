@@ -1,6 +1,7 @@
 import subprocess
 import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -10,10 +11,9 @@ class ZingoWallet:
         self.lightwalletd_uri = lightwalletd_uri
         self.history_file = Path(data_dir) / "faucet-history.json"
         
-    def _run_zingo_cmd(self, command):
+    def _run_zingo_cmd(self, command, timeout=30):
         """Run zingo-cli command via docker exec to zingo-wallet container"""
         try:
-            # Build the command to run in zingo-wallet container
             cmd = [
                 "docker", "exec", "zeckit-zingo-wallet",
                 "zingo-cli",
@@ -22,22 +22,19 @@ class ZingoWallet:
                 "--nosync"
             ]
             
-            # Send command via stdin
             result = subprocess.run(
                 cmd,
                 input=f"{command}\nquit\n",
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=timeout
             )
             
             if result.returncode != 0:
                 raise Exception(f"Command failed: {result.stderr}")
             
-            # Parse JSON output
             output = result.stdout.strip()
             
-            # Find JSON in output
             for line in output.split('\n'):
                 line = line.strip()
                 if line.startswith('{') or line.startswith('['):
@@ -53,19 +50,56 @@ class ZingoWallet:
         except Exception as e:
             raise Exception(f"Failed to run command: {str(e)}")
     
+    def sync_wallet(self, retries=3):
+        """Sync wallet with blockchain - CRITICAL before sending funds"""
+        for attempt in range(retries):
+            try:
+                print(f"🔄 Syncing wallet (attempt {attempt + 1}/{retries})...")
+                
+                cmd = [
+                    "docker", "exec", "-i", "zeckit-zingo-wallet",
+                    "zingo-cli",
+                    "--data-dir", self.data_dir,
+                    "--server", self.lightwalletd_uri
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    input="sync\nquit\n",
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+                
+                print(f"✅ Wallet sync completed (attempt {attempt + 1})")
+                time.sleep(5)
+                return True
+                
+            except Exception as e:
+                print(f"⚠️ Sync attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(10)
+                    continue
+                else:
+                    print(f"❌ Sync failed after {retries} attempts")
+                    return False
+        
+        return False
+    
     def get_balance(self):
         """Get wallet balance in ZEC"""
         try:
             result = self._run_zingo_cmd("balance")
             
-            # Sum all balance types
             total_zatoshis = 0
             if isinstance(result, dict):
                 total_zatoshis += result.get('transparent_balance', 0)
                 total_zatoshis += result.get('sapling_balance', 0)
                 total_zatoshis += result.get('orchard_balance', 0)
+                
+                if total_zatoshis == 0 and 'balance' in result:
+                    total_zatoshis = result.get('balance', 0)
             
-            # Convert zatoshis to ZEC
             return total_zatoshis / 100_000_000
             
         except Exception as e:
@@ -82,7 +116,6 @@ class ZingoWallet:
                     if isinstance(addr, dict) and addr.get('address', '').startswith('u1'):
                         return addr.get('address')
             
-            # Fallback: read from file
             address_file = Path(self.data_dir) / "faucet-address.txt"
             if address_file.exists():
                 return address_file.read_text().strip()
@@ -94,56 +127,58 @@ class ZingoWallet:
             return None
     
     def send_to_address(self, to_address, amount, memo=""):
-        """Send ZEC to address - returns real TXID from blockchain"""
+        """
+        Send ZEC to address - FIXED with proper sync and balance check
+        Returns real TXID from blockchain
+        """
         try:
-            # Convert ZEC to zatoshis
+            print(f"💰 Preparing to send {amount} ZEC to {to_address}")
+            
+            # STEP 1: Sync wallet BEFORE attempting send
+            print("STEP 1/4: Syncing wallet...")
+            if not self.sync_wallet(retries=3):
+                raise Exception("Wallet sync failed - cannot send funds")
+            
+            # STEP 2: Verify balance
+            print("STEP 2/4: Checking balance...")
+            balance = self.get_balance()
+            print(f"  Current balance: {balance} ZEC")
+            
+            if balance == 0:
+                raise Exception("Wallet has zero balance. Wait for mining rewards.")
+            
+            if balance < amount:
+                raise Exception(f"Insufficient balance. Have {balance} ZEC, need {amount} ZEC")
+            
+            # STEP 3: Send transaction
+            print("STEP 3/4: Sending transaction...")
             zatoshis = int(amount * 100_000_000)
             
-            # Build send command
             if memo:
                 command = f'send {to_address} {zatoshis} "{memo}"'
             else:
                 command = f'send {to_address} {zatoshis}'
             
-            result = self._run_zingo_cmd(command)
+            result = self._run_zingo_cmd(command, timeout=60)
             
-            # Extract TXID from result
             if isinstance(result, dict):
                 txid = result.get('txid')
                 if txid:
-                    # Record transaction
+                    print(f"✅ Transaction successful: {txid}")
+                    
+                    # STEP 4: Record transaction
+                    print("STEP 4/4: Recording transaction...")
                     self._record_transaction(to_address, amount, txid, memo)
+                    
+                    # Final sync
+                    self.sync_wallet(retries=1)
+                    
                     return txid
             
             raise Exception("No TXID returned from send command")
             
         except Exception as e:
             raise Exception(f"Failed to send transaction: {str(e)}")
-    
-    def sync_wallet(self):
-        """Sync wallet with blockchain"""
-        try:
-            # Run sync via docker exec with proper stdin
-            cmd = [
-                "docker", "exec", "-i", "zeckit-zingo-wallet",
-                "zingo-cli",
-                "--data-dir", self.data_dir,
-                "--server", self.lightwalletd_uri
-            ]
-            
-            result = subprocess.run(
-                cmd,
-                input="sync run\nquit\n",
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            
-            return True
-            
-        except Exception as e:
-            print(f"Sync warning: {e}")
-            return False
     
     def _record_transaction(self, to_address, amount, txid, memo=""):
         """Record transaction to history file"""
