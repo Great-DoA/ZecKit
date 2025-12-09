@@ -9,7 +9,7 @@ use std::process::Command;
 use std::fs;
 use tokio::time::{sleep, Duration};
 
-const MAX_WAIT_SECONDS: u64 = 2500;
+const MAX_WAIT_SECONDS: u64 = 3000;
 
 pub async fn execute(backend: String, fresh: bool) -> Result<()> {
     println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
