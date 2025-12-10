@@ -27,7 +27,7 @@ def _format_uptime(seconds: float) -> str:
 
 @stats_bp.route('/stats', methods=['GET'])
 def get_stats():
-    """Get faucet statistics"""
+    """Get faucet statistics with pool breakdown"""
     wallet = current_app.faucet_wallet
     
     if not wallet:
@@ -48,6 +48,8 @@ def get_stats():
     return jsonify({
         "faucet_address": wallet_stats.get('address', 'N/A'),
         "current_balance": wallet_stats.get('balance', 0.0),
+        "orchard_balance": wallet_stats.get('orchard_balance', 0.0),
+        "transparent_balance": wallet_stats.get('transparent_balance', 0.0),
         "total_requests": wallet_stats.get('transactions_count', 0),
         "total_sent": total_sent,
         "last_request": last_request,

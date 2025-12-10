@@ -219,7 +219,7 @@ async fn test_faucet_request(client: &Client) -> Result<()> {
     // Wait for sync to settle
     sleep(Duration::from_secs(3)).await;
     
-    // Step 3: Check balance
+    // Step 3: Check balance WITH ORCHARD BREAKDOWN
     println!("    {} Checking wallet balance...", "↻".cyan());
     
     let stats_resp = client
@@ -229,21 +229,37 @@ async fn test_faucet_request(client: &Client) -> Result<()> {
     
     if stats_resp.status().is_success() {
         let stats: Value = stats_resp.json().await?;
-        let balance = stats["current_balance"].as_f64().unwrap_or(0.0);
+        let total_balance = stats["current_balance"].as_f64().unwrap_or(0.0);
+        let orchard_balance = stats["orchard_balance"].as_f64().unwrap_or(0.0);
+        let transparent_balance = stats["transparent_balance"].as_f64().unwrap_or(0.0);
         
-        println!("    {} Balance: {} ZEC", "💰".cyan(), balance);
+        println!("    {} Total: {} ZEC", "💰".cyan(), total_balance);
+        println!("    {} Orchard: {} ZEC", "🌳".green(), orchard_balance);
+        println!("    {} Transparent: {} ZEC", "💎".blue(), transparent_balance);
         
-        if balance < 0.1 {
-            println!("    {} Insufficient balance for test (need 0.1 ZEC)", "⚠".yellow());
-            println!("    {} SKIP (wallet needs funds - this is expected on fresh start)", "→".yellow());
+        // Check if we have enough ORCHARD funds for the test
+        if orchard_balance < 0.1 {
+            println!("    {} Insufficient Orchard balance for test (need 0.1 ZEC)", "⚠".yellow());
+            
+            if transparent_balance >= 0.1 {
+                println!("    {} Wallet has transparent funds - needs shielding", "→".yellow());
+                println!("    {} Run: docker exec -it zeckit-zingo-wallet zingo-cli \\", "💡".cyan());
+                println!("    {}      --data-dir /var/zingo --server {} --chain regtest", "💡".cyan(), backend_uri);
+                println!("    {}      Then: shield -> confirm", "💡".cyan());
+            } else {
+                println!("    {} Wallet needs more funds from mining", "→".yellow());
+            }
+            
+            println!("    {} SKIP (Orchard funds required for test)", "→".yellow());
             println!();
             print!("  [5/5] Faucet funding request... ");
-            // Don't fail - wallet needs time to see mined funds
-            return Ok(());
+            return Ok(());  // Pass test but skip sending
         }
+        
+        println!("    {} Sufficient Orchard funds available", "✓".green());
     }
     
-    // Step 4: Get TRANSPARENT test address to send to (faucet only supports transparent for now)
+    // Step 4: Get test address
     println!("    {} Loading test fixture...", "↻".cyan());
     
     let fixture_path = std::path::Path::new("fixtures/test-address.json");
@@ -253,7 +269,7 @@ async fn test_faucet_request(client: &Client) -> Result<()> {
         // Generate transparent address for testing
         match generate_test_fixture(&backend_uri).await {
             Ok(addr) => {
-                println!("    {} Generated test address: {}", "✓".green(), &addr);
+                println!("    {} Generated test address: {}", "✓".green(), &addr[..16]);
             }
             Err(e) => {
                 println!("    {} Could not generate fixture: {}", "✗".red(), e);
@@ -277,7 +293,7 @@ async fn test_faucet_request(client: &Client) -> Result<()> {
             "Invalid fixture address".into()
         ))?;
     
-    println!("    {} Sending 0.1 ZEC to {}...", "↻".cyan(), &test_address[..10]);
+    println!("    {} Sending 0.1 ZEC to {}...", "↻".cyan(), &test_address[..16]);
     
     // Step 5: Test funding request
     let resp = client

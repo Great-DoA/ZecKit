@@ -41,12 +41,13 @@ def create_app(config_name: str = None) -> Flask:
     # Initialize Wallet (Zingo-CLI wrapper)
     try:
         app.faucet_wallet = get_wallet()
-        balance = app.faucet_wallet.get_balance()
+        # Skip balance check at startup - it times out with subprocess
+        # Balance is available via /stats endpoint which uses same method
         address = app.faucet_wallet.get_address("unified")
         
         logger.info(f"✓ Faucet wallet loaded (ZingoLib)")
         logger.info(f"  Address: {address}")
-        logger.info(f"  Balance: {balance} ZEC")
+        # logger.info(f"  Balance: {balance} ZEC")  # Available via /stats
         
     except Exception as e:
         logger.error(f"Failed to initialize wallet: {e}")

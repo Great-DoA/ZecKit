@@ -58,13 +58,14 @@ done
 
 echo "✅ Zebra has ${BLOCK_COUNT} blocks!"
 
-# Start lightwalletd
+# Start lightwalletd with RPC credentials (dummy values for Zebra which doesn't require auth)
 echo "🚀 Starting lightwalletd..."
 exec lightwalletd \
     --grpc-bind-addr=${LWD_GRPC_BIND} \
-    --zcash-conf-path=/dev/null \
     --data-dir=/var/lightwalletd \
     --log-level=7 \
     --no-tls-very-insecure=true \
-    --zcashd-rpchost=${ZEBRA_RPC_HOST} \
-    --zcashd-rpcport=${ZEBRA_RPC_PORT}
+    --rpchost=${ZEBRA_RPC_HOST} \
+    --rpcport=${ZEBRA_RPC_PORT} \
+    --rpcuser=zcash \
+    --rpcpassword=zcash
