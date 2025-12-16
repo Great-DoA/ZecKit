@@ -97,7 +97,7 @@ cat ${ZAINO_DATA_DIR}/zainod/zindexer.toml
 cd ${ZAINO_DATA_DIR}
 
 # Start Zaino
-echo "🚀 Starting Zaino indexer..."
+echo "Starting Zaino indexer..."
 export RUST_BACKTRACE=1
 export RUST_LOG=debug
 exec zainod

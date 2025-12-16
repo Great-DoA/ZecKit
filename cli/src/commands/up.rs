@@ -9,7 +9,7 @@ use std::process::Command;
 use std::fs;
 use tokio::time::{sleep, Duration};
 
-const MAX_WAIT_SECONDS: u64 = 6000;
+const MAX_WAIT_SECONDS: u64 = 10000;
 
 pub async fn execute(backend: String, fresh: bool) -> Result<()> {
     println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
@@ -36,7 +36,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
         }
     };
     
-    println!("{} Starting services: {}", "🚀".green(), services.join(", "));
+    println!("{} Starting services: {}", "".green(), services.join(", "));
     
     // Build and start services
     if backend == "lwd" {

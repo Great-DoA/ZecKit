@@ -56,10 +56,10 @@ while [ "${BLOCK_COUNT}" -lt "10" ]; do
     echo "  Current blocks: ${BLOCK_COUNT}"
 done
 
-echo "✅ Zebra has ${BLOCK_COUNT} blocks!"
+echo "Zebra has ${BLOCK_COUNT} blocks!"
 
 # Start lightwalletd with RPC credentials (dummy values for Zebra which doesn't require auth)
-echo "🚀 Starting lightwalletd..."
+echo "Starting lightwalletd..."
 exec lightwalletd \
     --grpc-bind-addr=${LWD_GRPC_BIND} \
     --data-dir=/var/lightwalletd \

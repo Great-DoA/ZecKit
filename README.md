@@ -7,20 +7,20 @@
 
 ---
 
-## 🚀 Project Status
+## Project Status
 
 **Current Milestone:** M2 Complete - Real Blockchain Transactions  
 
 ### What's Delivered
 
-**✅ M1 - Foundation**
+** M1 - Foundation**
 - Zebra regtest node in Docker
 - Health check automation  
 - Basic smoke tests
 - CI pipeline (self-hosted runner)
 - Project structure and documentation
 
-**✅ M2 - Real Transactions**
+** M2 - Real Transactions**
 - `zecdev` CLI tool with automated setup
 - Real blockchain transactions via ZingoLib
 - Faucet API with actual on-chain broadcasting
@@ -29,7 +29,7 @@
 - UA (ZIP-316) address generation
 - Comprehensive test suite (M1 + M2)
 
-**⏳ M3 - GitHub Action (Next)**
+** M3 - GitHub Action (Next)**
 - Reusable GitHub Action
 - Golden E2E shielded flows
 - Pre-mined blockchain snapshots
@@ -59,7 +59,7 @@ cd ..
 
 # Start devnet with automatic setup
 ./cli/target/release/zecdev up --backend zaino
-# ⏳ First run takes 10-15 minutes (mining 101+ blocks)
+#  First run takes 10-15 minutes (mining 101+ blocks)
 # ✓ Automatically extracts wallet address
 # ✓ Configures Zebra mining address
 # ✓ Waits for coinbase maturity
@@ -177,7 +177,7 @@ cd cli && cargo build --release && cd ..
 
 # 2. Start devnet (automatic setup!)
 ./cli/target/release/zecdev up --backend zaino
-# ⏳ Takes 10-15 minutes on first run (mining + sync)
+#  Takes 10-15 minutes on first run (mining + sync)
 
 # 3. Run test suite
 ./cli/target/release/zecdev test
@@ -521,14 +521,14 @@ lsof -i :9067  # Backend
 
 ## Roadmap
 
-### ✅ Milestone 1: Foundation
+###  Milestone 1: Foundation
 - Repository structure
 - Zebra regtest in Docker
 - Health checks & smoke tests
 - CI pipeline
 - Manual Docker Compose workflow
 
-### ✅ Milestone 2: Real Transactions
+###  Milestone 2: Real Transactions
 - `zecdev` CLI tool with automated setup
 - Real blockchain transactions
 - Faucet API with balance tracking
@@ -537,20 +537,20 @@ lsof -i :9067  # Backend
 - UA (ZIP-316) address generation
 - Comprehensive test suite
 
-### ⏳ Milestone 3: GitHub Action
+###  Milestone 3: GitHub Action
 - Reusable GitHub Action for CI
 - Golden E2E shielded flows
 - Pre-mined blockchain snapshots
 - Backend parity testing
 - Auto-shielding workflow
 
-### ⏳ Milestone 4: Documentation
+###  Milestone 4: Documentation
 - Quickstart guides
 - Video tutorials
 - Compatibility matrix
 - Advanced workflows
 
-### ⏳ Milestone 5: Maintenance
+###  Milestone 5: Maintenance
 - 90-day support window
 - Version pin updates
 - Community handover

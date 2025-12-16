@@ -233,9 +233,9 @@ async fn test_faucet_request(client: &Client) -> Result<()> {
         let orchard_balance = stats["orchard_balance"].as_f64().unwrap_or(0.0);
         let transparent_balance = stats["transparent_balance"].as_f64().unwrap_or(0.0);
         
-        println!("    {} Total: {} ZEC", "💰".cyan(), total_balance);
-        println!("    {} Orchard: {} ZEC", "🌳".green(), orchard_balance);
-        println!("    {} Transparent: {} ZEC", "💎".blue(), transparent_balance);
+        println!("    {} Total: {} ZEC", "".cyan(), total_balance);
+        println!("    {} Orchard: {} ZEC", "".green(), orchard_balance);
+        println!("    {} Transparent: {} ZEC", "".blue(), transparent_balance);
         
         // Check if we have enough ORCHARD funds for the test
         if orchard_balance < 0.1 {

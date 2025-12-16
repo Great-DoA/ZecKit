@@ -238,4 +238,4 @@ Contributions welcome:
 
 ---
 
-Thank you for contributing to ZecKit! 🚀
+Thank you for contributing to ZecKit!
