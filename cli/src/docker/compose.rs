@@ -42,6 +42,21 @@ impl DockerCompose {
     }
 
     pub fn up_with_profile(&self, profile: &str) -> Result<()> {
+        // BUILD IMAGES FIRST (if needed - Docker caches automatically)
+        let build_output = Command::new("docker")
+            .arg("compose")
+            .arg("--profile")
+            .arg(profile)
+            .arg("build")
+            .current_dir(&self.project_dir)
+            .output()?;
+
+        if !build_output.status.success() {
+            let error = String::from_utf8_lossy(&build_output.stderr);
+            return Err(ZecDevError::Docker(format!("Image build failed: {}", error)));
+        }
+
+        // THEN START SERVICES
         let output = Command::new("docker")
             .arg("compose")
             .arg("--profile")

@@ -110,7 +110,7 @@ services:
   # ========================================
   zingo-wallet-lwd:
     build:
-      context: ./docker/zingo-wallet
+      context: ./docker/zingo
       dockerfile: Dockerfile
     container_name: zeckit-zingo-wallet
     tmpfs:
@@ -140,7 +140,7 @@ services:
   # ========================================
   zingo-wallet-zaino:
     build:
-      context: ./docker/zingo-wallet
+      context: ./docker/zingo
       dockerfile: Dockerfile
     container_name: zeckit-zingo-wallet
     tmpfs:

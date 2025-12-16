@@ -9,7 +9,7 @@ use std::process::Command;
 use std::fs;
 use tokio::time::{sleep, Duration};
 
-const MAX_WAIT_SECONDS: u64 = 3000;
+const MAX_WAIT_SECONDS: u64 = 6000;
 
 pub async fn execute(backend: String, fresh: bool) -> Result<()> {
     println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
@@ -38,9 +38,12 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
     
     println!("{} Starting services: {}", "🚀".green(), services.join(", "));
     
+    // Build and start services
     if backend == "lwd" {
+        println!("{} Building Docker images (first run may take a few minutes)...", "🔨".cyan());
         compose.up_with_profile("lwd")?;
     } else if backend == "zaino" {
+        println!("{} Building Docker images (first run may take a few minutes)...", "🔨".cyan());
         compose.up_with_profile("zaino")?;
     } else {
         compose.up(&services)?;
@@ -395,7 +398,7 @@ async fn print_mining_info() -> Result<()> {
     if let Ok(height) = get_block_count(&client).await {
         println!();
         println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
-        println!("{}", "  Blockchain Status".green().bold());
+        println!("{}", "  Blockchain Status".cyan().bold());
         println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
         println!();
         println!("  {} {}", "Block Height:".bold(), height);
@@ -410,7 +413,7 @@ async fn print_mining_info() -> Result<()> {
 fn print_connection_info(backend: &str) {
     println!();
     println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
-    println!("{}", "  Services Ready".green().bold());
+    println!("{}", "  Services Ready".cyan().bold());
     println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".cyan());
     println!();
     println!("  {} {}", "Zebra RPC:".bold(), "http://127.0.0.1:8232");

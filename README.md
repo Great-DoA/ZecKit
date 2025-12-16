@@ -1,34 +1,39 @@
 # ZecKit
 
-> A Zcash developer toolkit built on Zebra with real blockchain transactions
+> A Linux-first toolkit for Zcash development on Zebra with real blockchain transactions
 
-[![Smoke Test](https://github.com/Supercoolkayy/ZecKit/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/Zecdev/ZecKit/actions/workflows/smoke-test.yml)
+[![Smoke Test](https://github.com/Supercoolkayy/ZecKit/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/Supercoolkayy/ZecKit/actions/workflows/smoke-test.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 
 ---
 
-## 🚀 Project Status: Milestone 2 Complete
+## 🚀 Project Status
 
-**Current Milestone:** M2 - Real Blockchain Transactions  
-**Completion:** ✅ 95% Complete (known limitations documented)
+**Current Milestone:** M2 Complete - Real Blockchain Transactions  
 
-### What Works Now
+### What's Delivered
 
-- ✅ **One-command devnet:** `zecdev up` starts everything
-- ✅ **Real blockchain transactions:** Actual ZEC transfers via ZingoLib + pexpect
-- ✅ **Auto-mining:** 101+ blocks mined automatically (coinbase maturity)
-- ✅ **Faucet API:** REST API for test funds with real on-chain transactions
-- ✅ **Backend toggle:** Switch between lightwalletd and Zaino
-- ✅ **UA fixtures:** ZIP-316 unified addresses generated
-- ✅ **Smoke tests:** 4-5/5 tests passing
-- ✅ **Mining address setup:** Automated script to configure correct mining address
+**✅ M1 - Foundation**
+- Zebra regtest node in Docker
+- Health check automation  
+- Basic smoke tests
+- CI pipeline (self-hosted runner)
+- Project structure and documentation
 
-### Known Issues
+**✅ M2 - Real Transactions**
+- `zecdev` CLI tool with automated setup
+- Real blockchain transactions via ZingoLib
+- Faucet API with actual on-chain broadcasting
+- Backend toggle (lightwalletd ↔ Zaino)
+- Automated mining address configuration
+- UA (ZIP-316) address generation
+- Comprehensive test suite (M1 + M2)
 
-- ⚠️ **Initial setup required:** Must run `setup-mining-address.sh` before first use
-- ⚠️ **10-15 minute mining wait:** Required for coinbase maturity (101 blocks)
-- ⚠️ **Wallet sync errors:** Upstream zingolib limitation with wallet state management
-- ⚠️ **Transparent mining only:** Zebra internal miner limitation (upstream issue)
+**⏳ M3 - GitHub Action (Next)**
+- Reusable GitHub Action
+- Golden E2E shielded flows
+- Pre-mined blockchain snapshots
+- Backend parity testing
 
 ---
 
@@ -41,46 +46,221 @@
 - **Resources:** 2 CPU cores, 4GB RAM, 5GB disk
 
 ### Installation
+
 ```bash
 # Clone repository
 git clone https://github.com/Supercoolkayy/ZecKit.git
 cd ZecKit
 
-# Build CLI
+# Build CLI (one time)
 cd cli
 cargo build --release
 cd ..
 
-# IMPORTANT: Setup mining address (first time only)
-./scripts/setup-mining-address.sh lwd
+# Start devnet with automatic setup
+./cli/target/release/zecdev up --backend zaino
+# ⏳ First run takes 10-15 minutes (mining 101+ blocks)
+# ✓ Automatically extracts wallet address
+# ✓ Configures Zebra mining address
+# ✓ Waits for coinbase maturity
 
-# Clear any existing data
-docker volume rm zeckit_zebra-data zeckit_lightwalletd-data 2>/dev/null || true
+# Run test suite
+./cli/target/release/zecdev test
 
-# Start devnet (takes 10-15 minutes for mining)
-docker-compose --profile lwd up -d
+# Verify faucet has funds
+curl http://localhost:8080/stats
+```
 
-# Monitor mining progress (wait for 101 blocks)
-# Check every minute:
-curl -s http://localhost:8232 -X POST -H 'Content-Type: application/json' \
+### Alternative: Manual Setup (M1 Style)
+
+```bash
+# For users who prefer manual Docker Compose control
+
+# 1. Setup mining address
+./scripts/setup-mining-address.sh zaino
+
+# 2. Start services manually
+docker-compose --profile zaino up -d
+
+# 3. Wait for 101 blocks (manual monitoring)
+curl -s http://localhost:8232 -X POST \
+  -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"1.0","id":"1","method":"getblockcount","params":[]}' | jq .result
 
-# Once 101+ blocks, verify faucet has funds
-curl http://localhost:8080/stats
-
-# Run tests
+# 4. Run tests
 ./cli/target/release/zecdev test
 ```
 
 ### Verify It's Working
-```bash
-# Check service status
-curl http://localhost:8080/health
 
-# Get faucet stats (should show balance after 101+ blocks)
+```bash
+# M1 tests - Basic health
+curl http://localhost:8232  # Zebra RPC
+curl http://localhost:8080/health  # Faucet health
+
+# M2 tests - Real transactions
+curl http://localhost:8080/stats  # Should show balance
+curl -X POST http://localhost:8080/request \
+  -H "Content-Type: application/json" \
+  -d '{"address": "tmXXXXX...", "amount": 10.0}'  # Real TXID returned!
+```
+
+---
+
+## CLI Usage
+
+### zecdev Commands (M2)
+
+**Start Devnet (Automated):**
+```bash
+# Build CLI first (one time)
+cd cli && cargo build --release && cd ..
+
+# Start with Zaino backend (recommended - faster)
+./cli/target/release/zecdev up --backend zaino
+
+# OR start with Lightwalletd backend
+./cli/target/release/zecdev up --backend lwd
+```
+
+**What happens automatically:**
+1. ✓ Starts Zebra regtest + backend + wallet + faucet
+2. ✓ Waits for wallet initialization
+3. ✓ Extracts wallet's transparent address
+4. ✓ Updates `zebra.toml` with correct miner_address
+5. ✓ Restarts Zebra to apply changes
+6. ✓ Mines 101+ blocks for coinbase maturity
+7. ✓ **Ready to use!**
+
+**Stop Services:**
+```bash
+./cli/target/release/zecdev down
+```
+
+**Run Test Suite (M1 + M2):**
+```bash
+./cli/target/release/zecdev test
+
+# Expected output:
+# [1/5] Zebra RPC connectivity... ✓ PASS (M1 test)
+# [2/5] Faucet health check... ✓ PASS (M1 test)
+# [3/5] Faucet stats endpoint... ✓ PASS (M2 test)
+# [4/5] Faucet address retrieval... ✓ PASS (M2 test)
+# [5/5] Faucet funding request... ✓ PASS (M2 test - real tx!)
+```
+
+### Manual Docker Compose (M1 Style)
+
+**For users who want direct control:**
+
+```bash
+# Setup mining address first
+./scripts/setup-mining-address.sh zaino
+
+# Start with Zaino profile
+docker-compose --profile zaino up -d
+
+# OR start with Lightwalletd profile
+docker-compose --profile lwd up -d
+
+# Stop services
+docker-compose --profile zaino down
+# or
+docker-compose --profile lwd down
+```
+
+### Complete Workflow
+
+```bash
+# 1. Build CLI (one time)
+cd cli && cargo build --release && cd ..
+
+# 2. Start devnet (automatic setup!)
+./cli/target/release/zecdev up --backend zaino
+# ⏳ Takes 10-15 minutes on first run (mining + sync)
+
+# 3. Run test suite
+./cli/target/release/zecdev test
+
+# 4. Check faucet balance
 curl http://localhost:8080/stats
 
-# Request test funds (real transaction!)
+# 5. Request funds (real transaction!)
+curl -X POST http://localhost:8080/request \
+  -H "Content-Type: application/json" \
+  -d '{"address": "tmXXXXX...", "amount": 10.0}'
+
+# 6. Stop when done
+./cli/target/release/zecdev down
+```
+
+### Fresh Start (Reset Everything)
+
+```bash
+# Stop services
+./cli/target/release/zecdev down
+
+# Remove volumes
+docker volume rm zeckit_zebra-data zeckit_zaino-data
+
+# Start fresh (automatic setup again)
+./cli/target/release/zecdev up --backend zaino
+```
+
+### Switch Backends
+
+```bash
+# Stop current backend
+./cli/target/release/zecdev down
+
+# Start with different backend
+./cli/target/release/zecdev up --backend lwd
+
+# Or back to Zaino
+./cli/target/release/zecdev up --backend zaino
+```
+
+---
+
+## Test Suite (M1 + M2)
+
+### Automated Tests
+
+```bash
+./cli/target/release/zecdev test
+```
+
+**Test Breakdown:**
+
+| Test | Milestone | What It Checks |
+|------|-----------|----------------|
+| 1/5 Zebra RPC | M1 | Basic node connectivity |
+| 2/5 Faucet health | M1 | Service health endpoint |
+| 3/5 Faucet stats | M2 | Balance tracking API |
+| 4/5 Faucet address | M2 | Address retrieval |
+| 5/5 Faucet request | M2 | **Real transaction!** |
+
+**Expected Results:**
+- M1 tests (1-2): Always pass if services running
+- M2 tests (3-4): Pass after wallet sync
+- M2 test 5: Pass after 101+ blocks mined (timing dependent)
+
+### Manual Testing (M1 Style)
+
+```bash
+# M1 - Test Zebra RPC
+curl -d '{"method":"getinfo","params":[]}' http://localhost:8232
+
+# M1 - Check health
+curl http://localhost:8080/health
+
+# M2 - Check balance
+curl http://localhost:8080/stats
+
+# M2 - Get address
+curl http://localhost:8080/address
+
+# M2 - Real transaction test
 curl -X POST http://localhost:8080/request \
   -H "Content-Type: application/json" \
   -d '{"address": "tmXXXXX...", "amount": 10.0}'
@@ -88,45 +268,7 @@ curl -X POST http://localhost:8080/request \
 
 ---
 
-## CLI Usage
-
-### Start Devnet
-```bash
-# FIRST TIME: Setup mining address
-./scripts/setup-mining-address.sh lwd
-
-# Start with lightwalletd
-docker-compose --profile lwd up -d
-
-# OR start with Zaino
-./scripts/setup-mining-address.sh zaino
-docker-compose --profile zaino up -d
-
-# Stop services
-docker-compose --profile lwd down
-# or
-docker-compose --profile zaino down
-
-# Stop and remove volumes (fresh start)
-docker-compose --profile lwd down
-docker volume rm zeckit_zebra-data zeckit_lightwalletd-data
-```
-
-### Run Tests
-```bash
-./cli/target/release/zecdev test
-
-# Expected: 4-5 tests passing
-# [1/5] Zebra RPC connectivity... ✓ PASS
-# [2/5] Faucet health check... ✓ PASS
-# [3/5] Faucet stats endpoint... ✓ PASS
-# [4/5] Faucet address retrieval... ✓ PASS
-# [5/5] Faucet funding request... ✓ PASS or SKIP (timing dependent)
-```
-
----
-
-## Faucet API
+## Faucet API (M2)
 
 ### Base URL
 ```
@@ -135,41 +277,56 @@ http://localhost:8080
 
 ### Endpoints
 
-**Get Statistics**
+**GET /health (M1)**
 ```bash
-curl http://localhost:8080/stats
+curl http://localhost:8080/health
 ```
-
 Response:
 ```json
 {
-  "current_balance": 1234.56,
-  "transparent_balance": 1234.56,
+  "status": "healthy"
+}
+```
+
+**GET /stats (M2)**
+```bash
+curl http://localhost:8080/stats
+```
+Response:
+```json
+{
+  "current_balance": 1628.125,
+  "transparent_balance": 1628.125,
   "orchard_balance": 0.0,
-  "faucet_address": "tmXXXXX...",
+  "faucet_address": "tmYuH9GAxfWM82Kckyb6kubRdpCKRpcw1ZA",
   "total_requests": 0,
   "uptime": "5m 23s"
 }
 ```
 
-**Get Address**
+**GET /address (M2)**
 ```bash
 curl http://localhost:8080/address
 ```
+Response:
+```json
+{
+  "address": "tmYuH9GAxfWM82Kckyb6kubRdpCKRpcw1ZA"
+}
+```
 
-**Request Funds**
+**POST /request (M2 - Real Transaction!)**
 ```bash
 curl -X POST http://localhost:8080/request \
   -H "Content-Type: application/json" \
   -d '{"address": "tmXXXXX...", "amount": 10.0}'
 ```
-
-Response includes real TXID from blockchain:
+Response includes **real TXID** from blockchain:
 ```json
 {
   "success": true,
-  "txid": "a1b2c3d4e5f6...",
-  "timestamp": "2025-12-10T12:00:00Z",
+  "txid": "a1b2c3d4e5f6789...",
+  "timestamp": "2025-12-15T12:00:00Z",
   "amount": 10.0
 }
 ```
@@ -177,252 +334,179 @@ Response includes real TXID from blockchain:
 ---
 
 ## Architecture
+
+### M1 Architecture (Foundation)
 ```
-┌─────────────────────────────────────┐
-│         Docker Compose              │
-│                                     │
-│  ┌──────────┐      ┌──────────┐   │
-│  │  Zebra   │◄─────┤  Faucet  │   │
-│  │ regtest  │      │  Flask   │   │
-│  │  :8232   │      │  :8080   │   │
-│  └────┬─────┘      └────┬─────┘   │
-│       │                 │          │
-│       ▼                 ▼          │
-│  ┌──────────┐      ┌──────────┐   │
-│  │Lightwald │◄─────┤  Zingo   │   │
-│  │  :9067   │      │  Wallet  │   │
-│  └──────────┘      └──────────┘   │
-└─────────────────────────────────────┘
+┌─────────────────────────────┐
+│      Docker Compose         │
+│                             │
+│  ┌─────────────┐           │
+│  │   Zebra     │           │
+│  │  (regtest)  │           │
+│  │   :8232     │           │
+│  └─────────────┘           │
+│                             │
+│  Health checks + RPC tests  │
+└─────────────────────────────┘
+```
+
+### M2 Architecture (Real Transactions)
+```
+┌──────────────────────────────────────────┐
+│           Docker Compose                  │
+│                                           │
+│  ┌──────────┐        ┌──────────┐       │
+│  │  Zebra   │◄───────┤  Faucet  │       │
+│  │ regtest  │        │  Flask   │       │
+│  │  :8232   │        │  :8080   │       │
+│  └────┬─────┘        └────┬─────┘       │
+│       │                   │              │
+│       ▼                   ▼              │
+│  ┌──────────┐        ┌──────────┐       │
+│  │ Zaino or │◄───────┤  Zingo   │       │
+│  │Lightwald │        │  Wallet  │       │
+│  │  :9067   │        │(pexpect) │       │
+│  └──────────┘        └──────────┘       │
+└──────────────────────────────────────────┘
            ▲
            │
       ┌────┴────┐
-      │ zecdev  │  (Rust CLI)
+      │ zecdev  │  (Rust CLI - M2)
       └─────────┘
 ```
 
 **Components:**
-- **Zebra:** Full node with internal miner (regtest mode)
-- **Lightwalletd:** Light client protocol server (gRPC)
-- **Zingo Wallet:** Official Zcash wallet (ZingoLib)
-- **Faucet:** Python Flask API for test funds (uses pexpect for reliable CLI interaction)
-- **CLI:** Rust tool for orchestration
+- **Zebra:** Full node with internal miner (M1)
+- **Lightwalletd/Zaino:** Light client backends (M2)
+- **Zingo Wallet:** Real transaction creation (M2)
+- **Faucet:** REST API for test funds (M2)
+- **zecdev CLI:** Automated orchestration (M2)
 
 ---
 
-## Known Limitations (M2)
+## Project Goals
 
-### 1. ⚠️ Mining Address Setup Required
+### Why ZecKit?
 
-**Issue:** Mining rewards must be sent to the faucet wallet's address.
+Zcash is migrating from zcashd to Zebra (official deprecation 2025), but builders lack a standard devnet + CI setup. ZecKit solves this by:
 
-**Solution:** Run the setup script before first use:
+1. **Standardizing Zebra Development** - One consistent way to run Zebra + light-client backends
+2. **Enabling UA-Centric Testing** - Built-in ZIP-316 unified address support
+3. **Supporting Backend Parity** - Toggle between lightwalletd and Zaino
+4. **Catching Breakage Early** - Automated E2E tests in CI
+
+### Progression (M1 → M2 → M3)
+
+**M1 Foundation:**
+- Basic Zebra regtest
+- Health checks
+- Manual Docker Compose
+
+**M2 Real Transactions:**
+- Automated CLI (`zecdev`)
+- Real on-chain transactions
+- Faucet API with pexpect
+- Backend toggle
+
+**M3 CI/CD (Next):**
+- GitHub Action
+- Golden shielded flows
+- Pre-mined snapshots
+
+---
+
+## Usage Notes
+
+### First Run Setup
+
+When you run `./cli/target/release/zecdev up` for the first time:
+
+1. **Initial mining takes 10-15 minutes** - This is required for coinbase maturity (Zcash consensus)
+2. **Automatic configuration** - The CLI extracts wallet address and configures Zebra automatically
+3. **Monitor progress** - Watch the CLI output or check block count:
+   ```bash
+   curl -s http://localhost:8232 -X POST -H 'Content-Type: application/json' \
+     -d '{"jsonrpc":"1.0","id":"1","method":"getblockcount","params":[]}' | jq .result
+   ```
+
+### Fresh Restart
+
+To reset everything and start clean:
+
 ```bash
-./scripts/setup-mining-address.sh lwd  # For lightwalletd
-# or
-./scripts/setup-mining-address.sh zaino  # For Zaino
+# Stop services
+./cli/target/release/zecdev down
+
+# Remove volumes (blockchain data)
+docker volume rm zeckit_zebra-data zeckit_zaino-data
+
+# Start fresh
+./cli/target/release/zecdev up --backend zaino
 ```
 
-**What it does:**
-- Extracts the faucet wallet's transparent address
-- Updates `docker/configs/zebra.toml` with the correct `miner_address`
-- Ensures mining rewards go to the faucet wallet
+### Switch Backends
 
-**When to run:**
-- Before first `docker-compose up`
-- After switching backends (lwd ↔ zaino)
-- After deleting volumes (fresh start)
-
----
-
-### 2. ⚠️ 10-15 Minute Initial Startup
-
-**Issue:** First run requires mining 101 blocks for coinbase maturity.
-
-**Root Cause:** Zcash consensus rule - coinbase outputs must mature 100 blocks before spending.
-
-**Cannot be optimized:** This is an inherent blockchain requirement.
-
-**Progress Monitoring:**
 ```bash
-# Check block count every minute
-curl -s http://localhost:8232 -X POST -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"1.0","id":"1","method":"getblockcount","params":[]}' | jq .result
+# Stop current backend
+./cli/target/release/zecdev down
 
-# Once result >= 101, funds are spendable
+# Start with different backend
+./cli/target/release/zecdev up --backend lwd
+
+# Or back to Zaino
+./cli/target/release/zecdev up --backend zaino
 ```
-
-**Alternative for M3:** Pre-mined blockchain snapshots for faster startup.
-
----
-
-### 3. ⚠️ Wallet Sync Errors
-
-**Problem:** Wallet may show sync errors or empty balance even with 101+ blocks.
-
-**Error Message:**
-```
-Sync error: Error: wallet height is more than 100 blocks ahead of best chain height
-```
-
-**Root Cause:** Upstream zingolib limitation with wallet state management across container restarts.
-
-**Workaround 1 - Fresh Restart:**
-```bash
-# Stop everything
-docker-compose --profile lwd down
-
-# Remove volumes
-docker volume rm zeckit_zebra-data zeckit_lightwalletd-data
-
-# Restart (will mine fresh 101 blocks)
-docker-compose --profile lwd up -d
-```
-
-**Workaround 2 - Manual Wallet Sync:**
-```bash
-# Enter zingo-cli
-docker exec -it zeckit-zingo-wallet zingo-cli \
-  --data-dir /var/zingo \
-  --server http://lightwalletd:9067
-
-# At prompt:
-sync run
-# Wait for completion
-balance
-# Should show transparent_balance
-```
-
-**Planned Fix:** M3 will improve wallet state management and add better sync detection.
-
----
-
-### 4. ⚠️ Transparent Mining Only
-
-**Issue:** Zebra's internal miner currently requires transparent addresses for coinbase rewards.
-
-**Technical Details:**
-- Zcash protocol supports shielded coinbase since Heartwood (2020) via [ZIP-213](https://zips.z.cash/zip-0213)
-- Zebra's internal miner implementation for Orchard unified addresses is still in development
-- See [Zebra #5929](https://github.com/ZcashFoundation/zebra/issues/5929) for tracking
-
-**Current Configuration:**
-```toml
-# docker/configs/zebra.toml
-[mining]
-internal_miner = true
-miner_address = "tmXXXXX..."  # Transparent address
-```
-
-**Impact:** Mining rewards go to transparent pool. For testing shielded transactions, funds must be manually shielded.
-
-**Planned Fix:** M3 will add automatic shielding workflow or wait for Zebra upstream support.
-
----
-
-### 5. ⚠️ Shielding Large UTXO Sets Fails
-
-**Problem:** Attempting to shield many small coinbase UTXOs fails with change output error.
-
-**Error Message:**
-```
-The transaction requires an additional change output of ZatBalance(15000) zatoshis
-```
-
-**Root Cause:** Upstream zingolib/zcash_client_backend limitation when building transactions with many inputs.
-
-**Status:** Reported to Zingo Labs team, tracked in [Zebra #10186](https://github.com/ZcashFoundation/zebra/issues/10186)
-
-**Workaround:** Shield smaller amounts at a time (fewer UTXOs per transaction).
-
-**Impact:** Does not block M2 - faucet uses transparent sends which work reliably.
 
 ---
 
 ## Troubleshooting
 
-### Balance Shows 0.0 After Mining
+### Common Operations
 
-**Problem:** Faucet stats show `0.0` balance even after 101+ blocks mined.
-
-**Cause:** Mining address doesn't match faucet wallet address.
-
-**Solution:**
+**Reset blockchain and start fresh:**
 ```bash
-# 1. Stop services
-docker-compose --profile lwd down
-
-# 2. Run setup script
-./scripts/setup-mining-address.sh lwd
-
-# 3. Remove old blockchain
-docker volume rm zeckit_zebra-data zeckit_lightwalletd-data
-
-# 4. Start fresh (will mine to correct address)
-docker-compose --profile lwd up -d
-
-# 5. Wait for 101 blocks
+./cli/target/release/zecdev down
+docker volume rm zeckit_zebra-data zeckit_zaino-data
+./cli/target/release/zecdev up --backend zaino
 ```
 
----
-
-### Wallet Sync Error
-
-**Problem:**
-```
-Sync error: Error: wallet height is more than 100 blocks ahead of best chain height
-```
-
-**Solution:**
-```bash
-docker-compose --profile lwd down
-docker volume rm zeckit_zebra-data zeckit_lightwalletd-data
-docker-compose --profile lwd up -d
-```
-
----
-
-### Port Conflicts
-```bash
-# Check what's using ports
-lsof -i :8232
-lsof -i :8080
-lsof -i :9067
-
-# Or change ports in docker-compose.yml
-```
-
----
-
-### Lightwalletd Takes Long to Start
-
-**Issue:** Lightwalletd container shows "Waiting" status for 5+ minutes.
-
-**Cause:** Initial sync with Zebra takes time. Healthcheck is lenient (300s start period).
-
-**Solution:** Wait for healthcheck to pass. Check logs:
-```bash
-docker logs zeckit-lightwalletd
-# Look for "Starting gRPC server on 0.0.0.0:9067"
-```
-
----
-
-### Zebra Won't Start
-
-**Check logs:**
+**Check service logs:**
 ```bash
 docker logs zeckit-zebra
+docker logs zeckit-faucet
+docker logs zeckit-zaino
 ```
 
-**Common issues:**
-- Port 8232 already in use
-- Insufficient disk space
-- Corrupted state database
-
-**Solution:**
+**Check wallet balance manually:**
 ```bash
-docker volume rm zeckit_zebra-data
-docker-compose --profile lwd up -d
+docker exec -it zeckit-zingo-wallet zingo-cli \
+  --data-dir /var/zingo \
+  --server http://zaino:9067 \
+  --chain regtest
+
+# At prompt:
+balance
+addresses
+```
+
+**Verify mining progress:**
+```bash
+# Check block count
+curl -s http://localhost:8232 -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"1.0","id":"1","method":"getblockcount","params":[]}' | jq .result
+
+# Check mempool
+curl -s http://localhost:8232 -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"1.0","id":"1","method":"getrawmempool","params":[]}' | jq
+```
+
+**Check port usage:**
+```bash
+lsof -i :8232  # Zebra
+lsof -i :8080  # Faucet
+lsof -i :9067  # Backend
 ```
 
 ---
@@ -430,80 +514,83 @@ docker-compose --profile lwd up -d
 ## Documentation
 
 - **[Architecture](specs/architecture.md)** - System design and data flow
-- **[Technical Spec](specs/technical-spec.md)** - Implementation details
+- **[Technical Spec](specs/technical-spec.md)** - Implementation details (27 pages!)
 - **[Acceptance Tests](specs/acceptance-tests.md)** - Test criteria
 
 ---
 
 ## Roadmap
 
-### ✅ Milestone 1: Foundation (Complete)
-- Docker-based Zebra regtest
-- CI/CD pipeline
-- Health checks
+### ✅ Milestone 1: Foundation
+- Repository structure
+- Zebra regtest in Docker
+- Health checks & smoke tests
+- CI pipeline
+- Manual Docker Compose workflow
 
-### ✅ Milestone 2: Real Transactions (95% Complete)
-- Rust CLI tool (`zecdev`)
-- Real blockchain transactions via ZingoLib + pexpect
+### ✅ Milestone 2: Real Transactions
+- `zecdev` CLI tool with automated setup
+- Real blockchain transactions
 - Faucet API with balance tracking
 - Backend toggle (lightwalletd ↔ Zaino)
-- Mining address setup automation
-- UA fixture generation
-- Smoke tests (4-5/5 passing)
+- Automated mining address configuration
+- UA (ZIP-316) address generation
+- Comprehensive test suite
 
-### ⏳ Milestone 3: GitHub Action (Next)
+### ⏳ Milestone 3: GitHub Action
+- Reusable GitHub Action for CI
+- Golden E2E shielded flows
 - Pre-mined blockchain snapshots
-- Improved wallet state management
-- Reusable GitHub Action
-- Full E2E golden flows (5/5 tests passing reliably)
-- Auto-shielding workflow
 - Backend parity testing
+- Auto-shielding workflow
+
+### ⏳ Milestone 4: Documentation
+- Quickstart guides
+- Video tutorials
+- Compatibility matrix
+- Advanced workflows
+
+### ⏳ Milestone 5: Maintenance
+- 90-day support window
+- Version pin updates
+- Community handover
 
 ---
 
-## Technical Implementation Notes
+## Technical Highlights
 
-### Pexpect for Wallet Interaction
+### M1 Achievement: Docker Foundation
 
-The faucet uses `pexpect` (Python pseudo-terminal library) instead of `subprocess` for reliable zingo-cli interaction:
+- Zebra regtest with health checks
+- Automated smoke tests
+- CI pipeline integration
+- Manual service control
 
-**Why pexpect:**
-- Creates real PTY (pseudo-terminal) - zingo-cli detects interactive mode
-- Can wait for specific prompts/patterns
-- Handles async output properly
-- Natural command flow like human typing
+### M2 Achievement: Real Transactions
 
-**Key implementation:**
+**Pexpect for Wallet Interaction:**
 ```python
-# Spawn interactive session
+# Reliable PTY control replaces flaky subprocess
 child = pexpect.spawn('docker exec -i zeckit-zingo-wallet zingo-cli ...')
-
-# Wait for prompt
 child.expect(r'\(test\) Block:\d+', timeout=90)
-
-# Run commands
-child.sendline('sync')
-child.expect(r'Sync completed succesfully', timeout=60)
-
-# Check balance
-child.sendline('spendable_balance')
-child.expect(r'"spendable_balance":\s*(\d+)')
-balance = int(child.match.group(1))
+child.sendline('send [{"address":"tm...", "amount":10.0}]')
+child.expect(r'"txid":\s*"([a-f0-9]{64})"')
+txid = child.match.group(1)  # Real TXID!
 ```
 
-### Ephemeral Wallet Volumes
+**Automated Setup:**
+- Wallet address extraction
+- Zebra configuration updates
+- Service restarts
+- Mining to maturity
 
-Wallet data uses tmpfs (temporary RAM filesystem) for clean state:
+**Ephemeral Wallet (tmpfs):**
 ```yaml
 zingo-wallet:
   tmpfs:
     - /var/zingo:mode=1777,size=512m
 ```
-
-**Benefits:**
-- Fresh wallet on every restart
-- No stale state conflicts
-- Fast I/O operations
+Benefits: Fresh state, fast I/O, no corruption
 
 ---
 
@@ -512,7 +599,7 @@ zingo-wallet:
 Contributions welcome! Please:
 
 1. Fork and create feature branch
-2. Test locally: `docker-compose --profile lwd up && ./cli/target/release/zecdev test`
+2. Test locally: `./cli/target/release/zecdev up --backend zaino && ./cli/target/release/zecdev test`
 3. Follow code style (Rust: `cargo fmt`, Python: `black`)
 4. Open PR with clear description
 
@@ -520,26 +607,32 @@ Contributions welcome! Please:
 
 ## FAQ
 
+**Q: What's the difference between M1 and M2?**  
+A: M1 = Basic Zebra setup. M2 = Automated CLI + real transactions + faucet API.
+
 **Q: Are these real blockchain transactions?**  
-A: Yes! M2 uses real on-chain transactions via ZingoLib and Zingo wallet, not mocks.
+A: Yes! Uses actual ZingoLib wallet with real on-chain transactions (regtest network).
 
 **Q: Can I use this in production?**  
 A: No. ZecKit is for development/testing only (regtest mode).
 
-**Q: Why does startup take so long?**  
-A: Mining 101 blocks for coinbase maturity takes 10-15 minutes. This is unavoidable (consensus requirement).
+**Q: How do I start the devnet?**  
+A: `./cli/target/release/zecdev up --backend zaino` (or `--backend lwd`)
 
-**Q: Why do I need to run setup-mining-address.sh?**  
-A: To ensure mining rewards go to the faucet wallet's address, not a hardcoded address.
-
-**Q: How do I reset everything?**  
-A: `docker-compose --profile lwd down && docker volume rm zeckit_zebra-data zeckit_lightwalletd-data`
-
-**Q: Why use transparent mining address?**  
-A: Zebra's internal miner doesn't yet support Orchard unified addresses. This is an upstream limitation being tracked in [Zebra #5929](https://github.com/ZcashFoundation/zebra/issues/5929).
+**Q: How long does first startup take?**  
+A: 10-15 minutes for mining 101 blocks (coinbase maturity requirement).
 
 **Q: Can I switch between lightwalletd and Zaino?**  
-A: Yes! Stop services, run `./scripts/setup-mining-address.sh [lwd|zaino]`, then start with the new profile.
+A: Yes! `zecdev down` then `zecdev up --backend [lwd|zaino]`
+
+**Q: How do I reset everything?**  
+A: `zecdev down && docker volume rm zeckit_zebra-data zeckit_zaino-data`
+
+**Q: Where can I find the technical details?**  
+A: Check [specs/technical-spec.md](specs/technical-spec.md) for the full implementation (27 pages!)
+
+**Q: What tests are included?**  
+A: M1 tests (RPC, health) + M2 tests (stats, address, real transactions)
 
 ---
 
@@ -564,10 +657,10 @@ Dual-licensed under MIT OR Apache-2.0
 **Thanks to:**
 - Zcash Foundation (Zebra)
 - Electric Coin Company (lightwalletd)
-- Zingo Labs (ZingoLib)
+- Zingo Labs (ZingoLib & Zaino)
 - Zcash community
 
 ---
 
-**Last Updated:** December 10, 2025  
-**Next:** M3 - GitHub Action & Pre-mined Snapshots
+**Last Updated:** December 15, 2025  
+**Status:** M2 Complete - Real Blockchain Transactions Delivered
