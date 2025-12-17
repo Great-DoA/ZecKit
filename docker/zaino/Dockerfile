@@ -13,14 +13,15 @@ RUN apt-get update && apt-get install -y \
     protobuf-compiler \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build Zaino indexer WITH MEMORY LIMITS
+# Clone and build Zaino indexer FROM THE FIX BRANCH
 WORKDIR /build
-RUN git clone https://github.com/zingolabs/zaino.git && \
+RUN git clone https://github.com/Timi16/zaino.git && \
     cd zaino && \
+    git checkout fix/regtest-insecure-grpc && \
     CARGO_BUILD_JOBS=1 cargo build --release --bin zainod && \
     mv target/release/zainod /usr/local/bin/ && \
     chmod +x /usr/local/bin/zainod && \
-    rm -rf /build  # Clean up immediately
+    rm -rf /build
 
 RUN mkdir -p /var/zaino && chmod 777 /var/zaino
 
