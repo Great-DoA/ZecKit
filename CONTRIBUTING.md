@@ -197,7 +197,7 @@ chmod +x tests/smoke/my-new-test.sh
 ### Next: M2 - CLI Tool
 Contributions welcome:
 - Python Flask faucet implementation
-- `zecdev` CLI tool (Rust or Bash)
+- `zeckit` CLI tool (Rust or Bash)
 - Pre-mined fund automation
 
 ### Future: M3-M5

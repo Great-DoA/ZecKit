@@ -42,7 +42,7 @@ ZecKit is a containerized development toolkit for building on Zcash's Zebra node
                             ▲
                             │
                        ┌────┴────┐
-                       │ zecdev  │  (Rust CLI)
+                       │ zeckit  │  (Rust CLI)
                        │ up/down │
                        │  test   │
                        └─────────┘
@@ -149,7 +149,7 @@ ZecKit is a containerized development toolkit for building on Zcash's Zebra node
 
 ---
 
-### 5. CLI Tool (`zecdev`)
+### 5. CLI Tool (`zeckit`)
 
 **Purpose:** Developer command-line interface
 
@@ -178,7 +178,7 @@ ZecKit is a containerized development toolkit for building on Zcash's Zebra node
 ### Startup Sequence
 
 ```
-1. User runs: zecdev up --backend=lwd
+1. User runs: zeckit up --backend=lwd
    │
    ├─► CLI starts Docker Compose with lwd profile
    │
@@ -281,7 +281,7 @@ lightwalletd-data/
 - Allows fast restarts
 
 **Ephemeral (--purge):**
-- `zecdev down --purge` removes all volumes
+- `zeckit down --purge` removes all volumes
 - Forces fresh blockchain mining
 - Required after breaking changes
 

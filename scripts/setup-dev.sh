@@ -13,8 +13,8 @@ NC='\033[0m'
 COMPOSE_MAIN="docker-compose.yml"
 COMPOSE_ZEBRA="docker/compose/zebra.yml"
 # network names used in compose files
-EXPECTED_NETWORK_NAME="zecdev-network"
-FALLBACK_NETWORK_NAME="zecdev"
+EXPECTED_NETWORK_NAME="zeckit-network"
+FALLBACK_NETWORK_NAME="zeckit"
 
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"

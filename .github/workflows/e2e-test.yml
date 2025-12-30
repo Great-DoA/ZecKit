@@ -85,13 +85,13 @@ jobs:
       - name: Build CLI binary
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "  Building ZecDev CLI"
+          echo "  Building zeckit CLI"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           cd cli
           cargo build --release
           cd ..
           echo "✓ CLI binary built"
-          ls -lh cli/target/release/zecdev
+          ls -lh cli/target/release/zeckit
           echo ""
       
       - name: Start devnet with zaino backend
@@ -102,7 +102,7 @@ jobs:
           echo ""
           
           # No --fresh flag, but volumes are already cleared above
-          ./cli/target/release/zecdev up --backend zaino &
+          ./cli/target/release/zeckit up --backend zaino &
           PID=$!
           
           SECONDS=0
@@ -145,7 +145,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
           
-          ./cli/target/release/zecdev test
+          ./cli/target/release/zeckit test
           
           TEST_EXIT_CODE=$?
           

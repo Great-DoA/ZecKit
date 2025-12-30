@@ -17,13 +17,13 @@ This document defines the acceptance criteria for Milestone 2 (CLI Tool + Faucet
 
 ## M2 Acceptance Criteria
 
-### 1. CLI Tool: `zecdev up`
+### 1. CLI Tool: `zeckit up`
 
 **Test:** Start devnet with lightwalletd backend
 
 ```bash
 cd cli
-./target/release/zecdev up --backend=lwd
+./target/release/zeckit up --backend=lwd
 ```
 
 **Expected:**
@@ -45,12 +45,12 @@ Faucet API: http://127.0.0.1:8080
 
 ---
 
-### 2. CLI Tool: `zecdev test`
+### 2. CLI Tool: `zeckit test`
 
 **Test:** Run comprehensive smoke tests
 
 ```bash
-./target/release/zecdev test
+./target/release/zeckit test
 ```
 
 **Expected:**
@@ -155,7 +155,7 @@ curl http://127.0.0.1:8080/stats
 **Test:** Services stop cleanly
 
 ```bash
-./target/release/zecdev down
+./target/release/zeckit down
 ```
 
 **Expected:**
@@ -170,8 +170,8 @@ curl http://127.0.0.1:8080/stats
 **Test:** Can restart from clean state
 
 ```bash
-./target/release/zecdev down --purge
-./target/release/zecdev up --backend=lwd
+./target/release/zeckit down --purge
+./target/release/zeckit up --backend=lwd
 ```
 
 **Expected:**
@@ -193,9 +193,9 @@ Error: wallet height is more than 100 blocks ahead of best chain height
 
 **Workaround:**
 ```bash
-./target/release/zecdev down
+./target/release/zeckit down
 docker volume rm zeckit_zingo-data zeckit_zebra-data zeckit_lightwalletd-data
-./target/release/zecdev up --backend=lwd
+./target/release/zeckit up --backend=lwd
 ```
 
 **Status:** Known issue, will be fixed in M3 with ephemeral wallet volume.
@@ -211,10 +211,10 @@ docker volume rm zeckit_zingo-data zeckit_zebra-data zeckit_lightwalletd-data
 ```yaml
 # .github/workflows/smoke-test.yml
 - name: Start ZecKit
-  run: ./cli/target/release/zecdev up --backend=lwd
+  run: ./cli/target/release/zeckit up --backend=lwd
   
 - name: Run tests
-  run: ./cli/target/release/zecdev test
+  run: ./cli/target/release/zeckit test
 ```
 
 **Expected:**

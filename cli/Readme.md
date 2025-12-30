@@ -1,4 +1,4 @@
-# ZecDev CLI
+# zeckit CLI
 
 Command-line tool for managing ZecKit development environment.
 
@@ -11,18 +11,18 @@ cd cli
 cargo build --release
 ```
 
-The binary will be at `target/release/zecdev` (or `zecdev.exe` on Windows).
+The binary will be at `target/release/zeckit` (or `zeckit.exe` on Windows).
 
 ### Add to PATH
 
 **Linux/macOS:**
 ```bash
-sudo cp target/release/zecdev /usr/local/bin/
+sudo cp target/release/zeckit /usr/local/bin/
 ```
 
 **Windows (PowerShell as Admin):**
 ```powershell
-copy target\release\zecdev.exe C:\Windows\System32\
+copy target\release\zeckit.exe C:\Windows\System32\
 ```
 
 ## Usage
@@ -31,38 +31,38 @@ copy target\release\zecdev.exe C:\Windows\System32\
 
 ```bash
 # Start Zebra + Faucet only
-zecdev up
+zeckit up
 
 # Start with lightwalletd
-zecdev up --backend lwd
+zeckit up --backend lwd
 
 # Start with Zaino (experimental)
-zecdev up --backend zaino
+zeckit up --backend zaino
 
 # Fresh start (remove old data)
-zecdev up --fresh
+zeckit up --fresh
 ```
 
 ### Stop Devnet
 
 ```bash
 # Stop services (keep data)
-zecdev down
+zeckit down
 
 # Stop and remove volumes
-zecdev down --purge
+zeckit down --purge
 ```
 
 ### Check Status
 
 ```bash
-zecdev status
+zeckit status
 ```
 
 ### Run Tests
 
 ```bash
-zecdev test
+zeckit test
 ```
 
 ## Commands
@@ -76,12 +76,12 @@ zecdev test
 
 ## Options
 
-### `zecdev up`
+### `zeckit up`
 
 - `--backend <BACKEND>` - Backend to use: `lwd` (lightwalletd) or `zaino`
 - `--fresh` - Remove old data and start fresh
 
-### `zecdev down`
+### `zeckit down`
 
 - `--purge` - Remove volumes (clean slate)
 
@@ -89,16 +89,16 @@ zecdev test
 
 ```bash
 # Start everything
-zecdev up --backend lwd
+zeckit up --backend lwd
 
 # Check if running
-zecdev status
+zeckit status
 
 # Run tests
-zecdev test
+zeckit test
 
 # Stop and clean up
-zecdev down --purge
+zeckit down --purge
 ```
 
 ## Development

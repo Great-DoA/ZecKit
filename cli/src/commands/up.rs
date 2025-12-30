@@ -1,6 +1,6 @@
 use crate::docker::compose::DockerCompose;
 use crate::docker::health::HealthChecker;
-use crate::error::{Result, ZecDevError};
+use crate::error::{Result, zeckitError};
 use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
@@ -31,7 +31,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
         "zaino" => vec!["zebra", "faucet"],
         "none" => vec!["zebra", "faucet"],
         _ => {
-            return Err(ZecDevError::Config(format!(
+            return Err(zeckitError::Config(format!(
                 "Invalid backend: {}. Use 'lwd', 'zaino', or 'none'", 
                 backend
             )));
@@ -97,7 +97,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
             io::stdout().flush().ok();
             sleep(Duration::from_secs(1)).await;
         } else {
-            return Err(ZecDevError::ServiceNotReady("Zebra not ready".into()));
+            return Err(zeckitError::ServiceNotReady("Zebra not ready".into()));
         }
     }
     println!();
@@ -122,7 +122,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
                 io::stdout().flush().ok();
                 sleep(Duration::from_secs(1)).await;
             } else {
-                return Err(ZecDevError::ServiceNotReady(format!("{} not ready", backend_name)));
+                return Err(zeckitError::ServiceNotReady(format!("{} not ready", backend_name)));
             }
         }
         println!();
@@ -153,7 +153,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
             io::stdout().flush().ok();
             sleep(Duration::from_secs(1)).await;
         } else {
-            return Err(ZecDevError::ServiceNotReady("Wallet not ready after 100 minutes".into()));
+            return Err(zeckitError::ServiceNotReady("Wallet not ready after 100 minutes".into()));
         }
     }
     println!();
@@ -175,7 +175,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
             io::stdout().flush().ok();
             sleep(Duration::from_secs(1)).await;
         } else {
-            return Err(ZecDevError::ServiceNotReady("Faucet not ready".into()));
+            return Err(zeckitError::ServiceNotReady("Faucet not ready".into()));
         }
     }
     println!();
@@ -283,7 +283,7 @@ async fn wait_for_wallet_ready(pb: &ProgressBar, backend_uri: &str) -> Result<()
         }
         
         if start.elapsed().as_secs() > WALLET_TIMEOUT_SECONDS {
-            return Err(ZecDevError::ServiceNotReady("Wallet not ready after 100 minutes".into()));
+            return Err(zeckitError::ServiceNotReady("Wallet not ready after 100 minutes".into()));
         }
         
         sleep(Duration::from_secs(2)).await;
@@ -312,7 +312,7 @@ async fn wait_for_mined_blocks(pb: &ProgressBar, min_blocks: u64) -> Result<()> 
         }
         
         if start.elapsed().as_secs() > MAX_WAIT_SECONDS {
-            return Err(ZecDevError::ServiceNotReady(
+            return Err(zeckitError::ServiceNotReady(
                 "Internal miner timeout - blocks not reaching maturity".into()
             ));
         }
@@ -338,7 +338,7 @@ async fn get_block_count(client: &Client) -> Result<u64> {
     
     json.get("result")
         .and_then(|v| v.as_u64())
-        .ok_or_else(|| ZecDevError::HealthCheck("Invalid block count response".into()))
+        .ok_or_else(|| zeckitError::HealthCheck("Invalid block count response".into()))
 }
 
 async fn get_wallet_transparent_address(backend_uri: &str) -> Result<String> {
@@ -350,7 +350,7 @@ async fn get_wallet_transparent_address(backend_uri: &str) -> Result<String> {
     let output = Command::new("docker")
         .args(&["exec", "zeckit-zingo-wallet", "bash", "-c", &cmd_str])
         .output()
-        .map_err(|e| ZecDevError::HealthCheck(format!("Docker exec failed: {}", e)))?;
+        .map_err(|e| zeckitError::HealthCheck(format!("Docker exec failed: {}", e)))?;
     
     let output_str = String::from_utf8_lossy(&output.stdout);
     
@@ -369,14 +369,14 @@ async fn get_wallet_transparent_address(backend_uri: &str) -> Result<String> {
         }
     }
     
-    Err(ZecDevError::HealthCheck("Could not find transparent address in wallet output".into()))
+    Err(zeckitError::HealthCheck("Could not find transparent address in wallet output".into()))
 }
 
 fn update_zebra_miner_address(address: &str) -> Result<()> {
     let zebra_config_path = "docker/configs/zebra.toml";
     
     let config = fs::read_to_string(zebra_config_path)
-        .map_err(|e| ZecDevError::Config(format!("Could not read zebra.toml: {}", e)))?;
+        .map_err(|e| zeckitError::Config(format!("Could not read zebra.toml: {}", e)))?;
     
     let new_config = if config.contains("miner_address") {
         use regex::Regex;
@@ -390,7 +390,7 @@ fn update_zebra_miner_address(address: &str) -> Result<()> {
     };
     
     fs::write(zebra_config_path, new_config)
-        .map_err(|e| ZecDevError::Config(format!("Could not write zebra.toml: {}", e)))?;
+        .map_err(|e| zeckitError::Config(format!("Could not write zebra.toml: {}", e)))?;
     
     Ok(())
 }
@@ -399,10 +399,10 @@ async fn restart_zebra() -> Result<()> {
     let output = Command::new("docker")
         .args(&["restart", "zeckit-zebra"])
         .output()
-        .map_err(|e| ZecDevError::Docker(format!("Failed to restart Zebra: {}", e)))?;
+        .map_err(|e| zeckitError::Docker(format!("Failed to restart Zebra: {}", e)))?;
     
     if !output.status.success() {
-        return Err(ZecDevError::Docker("Zebra restart failed".into()));
+        return Err(zeckitError::Docker("Zebra restart failed".into()));
     }
     
     sleep(Duration::from_secs(15)).await;
@@ -419,7 +419,7 @@ async fn generate_ua_fixtures(backend_uri: &str) -> Result<String> {
     let output = Command::new("docker")
         .args(&["exec", "zeckit-zingo-wallet", "bash", "-c", &cmd_str])
         .output()
-        .map_err(|e| ZecDevError::HealthCheck(format!("Docker exec failed: {}", e)))?;
+        .map_err(|e| zeckitError::HealthCheck(format!("Docker exec failed: {}", e)))?;
     
     let output_str = String::from_utf8_lossy(&output.stdout);
     
@@ -448,7 +448,7 @@ async fn generate_ua_fixtures(backend_uri: &str) -> Result<String> {
         }
     }
     
-    Err(ZecDevError::HealthCheck("Could not find wallet address in output".into()))
+    Err(zeckitError::HealthCheck("Could not find wallet address in output".into()))
 }
 
 async fn sync_wallet(backend_uri: &str) -> Result<()> {
@@ -464,12 +464,12 @@ async fn sync_wallet(backend_uri: &str) -> Result<()> {
             &cmd_str
         ])
         .output()
-        .map_err(|e| ZecDevError::HealthCheck(format!("Sync command failed: {}", e)))?;
+        .map_err(|e| zeckitError::HealthCheck(format!("Sync command failed: {}", e)))?;
     
     let output_str = String::from_utf8_lossy(&output.stdout);
     
     if output_str.contains("Sync error") {
-        Err(ZecDevError::HealthCheck("Wallet sync error detected".into()))
+        Err(zeckitError::HealthCheck("Wallet sync error detected".into()))
     } else {
         Ok(())
     }
@@ -522,7 +522,7 @@ fn print_connection_info(backend: &str) {
     
     println!();
     println!("Next steps:");
-    println!("  • Run tests: zecdev test");
+    println!("  • Run tests: zeckit test");
     println!("  • View fixtures: cat fixtures/unified-addresses.json");
     println!();
 }

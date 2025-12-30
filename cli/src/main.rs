@@ -11,7 +11,7 @@ mod utils;
 use error::Result;
 
 #[derive(Parser)]
-#[command(name = "zecdev")]
+#[command(name = "zeckit")]
 #[command(about = "ZecKit - Developer toolkit for Zcash on Zebra", long_about = None)]
 #[command(version)]
 struct Cli {

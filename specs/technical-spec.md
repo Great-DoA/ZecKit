@@ -70,7 +70,7 @@ M2 delivers a fully functional Zcash development environment with **real blockch
                         ▲
                         │
                    ┌────┴────┐
-                   │ zecdev  │  (Rust CLI)
+                   │ zeckit  │  (Rust CLI)
                    └─────────┘
 ```
 
@@ -429,10 +429,10 @@ except Exception as e:
 
 ---
 
-### 6. CLI Tool (zecdev)
+### 6. CLI Tool (zeckit)
 
 **Language:** Rust  
-**Binary:** `cli/target/release/zecdev`  
+**Binary:** `cli/target/release/zeckit`  
 **Commands:** `up`, `down`, `test`
 
 **Implementation:**
