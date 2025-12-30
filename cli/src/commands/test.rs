@@ -88,7 +88,7 @@ pub async fn execute() -> Result<()> {
     println!();
 
     if failed > 0 {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             format!("{} test(s) failed", failed)
         ));
     }
@@ -109,7 +109,7 @@ async fn test_zebra_rpc(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Zebra RPC not responding".into()
         ));
     }
@@ -124,7 +124,7 @@ async fn test_faucet_health(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Faucet health check failed".into()
         ));
     }
@@ -139,7 +139,7 @@ async fn test_faucet_stats(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Faucet stats not available".into()
         ));
     }
@@ -148,13 +148,13 @@ async fn test_faucet_stats(client: &Client) -> Result<()> {
     
     // Verify key fields exist
     if json.get("faucet_address").is_none() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Stats missing faucet_address".into()
         ));
     }
     
     if json.get("current_balance").is_none() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Stats missing current_balance".into()
         ));
     }
@@ -169,14 +169,14 @@ async fn test_faucet_address(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Could not get faucet address".into()
         ));
     }
 
     let json: Value = resp.json().await?;
     if json.get("address").is_none() {
-        return Err(crate::error::ZecDevError::HealthCheck(
+        return Err(crate::error::zeckitError::HealthCheck(
             "Invalid address response".into()
         ));
     }
@@ -212,7 +212,7 @@ async fn test_wallet_shield() -> Result<()> {
         let shield_output = Command::new("docker")
             .args(&["exec", "-i", "zeckit-zingo-wallet", "bash", "-c", &shield_cmd])
             .output()
-            .map_err(|e| crate::error::ZecDevError::HealthCheck(format!("Shield failed: {}", e)))?;
+            .map_err(|e| crate::error::zeckitError::HealthCheck(format!("Shield failed: {}", e)))?;
         
         let shield_str = String::from_utf8_lossy(&shield_output.stdout);
         
@@ -339,7 +339,7 @@ fn get_wallet_balance(backend_uri: &str) -> Result<(f64, f64)> {
     let balance_output = Command::new("docker")
         .args(&["exec", "zeckit-zingo-wallet", "bash", "-c", &balance_cmd])
         .output()
-        .map_err(|e| crate::error::ZecDevError::HealthCheck(format!("Balance check failed: {}", e)))?;
+        .map_err(|e| crate::error::zeckitError::HealthCheck(format!("Balance check failed: {}", e)))?;
     
     let balance_str = String::from_utf8_lossy(&balance_output.stdout);
     
@@ -373,7 +373,7 @@ fn detect_backend() -> Result<String> {
     let output = Command::new("docker")
         .args(&["ps", "--filter", "name=zeckit-zaino", "--format", "{{.Names}}"])
         .output()
-        .map_err(|e| crate::error::ZecDevError::Docker(format!("Failed to detect backend: {}", e)))?;
+        .map_err(|e| crate::error::zeckitError::Docker(format!("Failed to detect backend: {}", e)))?;
     
     let stdout = String::from_utf8_lossy(&output.stdout);
     
@@ -384,14 +384,14 @@ fn detect_backend() -> Result<String> {
         let output = Command::new("docker")
             .args(&["ps", "--filter", "name=zeckit-lightwalletd", "--format", "{{.Names}}"])
             .output()
-            .map_err(|e| crate::error::ZecDevError::Docker(format!("Failed to detect backend: {}", e)))?;
+            .map_err(|e| crate::error::zeckitError::Docker(format!("Failed to detect backend: {}", e)))?;
         
         let stdout = String::from_utf8_lossy(&output.stdout);
         
         if stdout.contains("zeckit-lightwalletd") {
             Ok("http://lightwalletd:9067".to_string())
         } else {
-            Err(crate::error::ZecDevError::HealthCheck(
+            Err(crate::error::zeckitError::HealthCheck(
                 "No backend detected (neither zaino nor lightwalletd running)".into()
             ))
         }

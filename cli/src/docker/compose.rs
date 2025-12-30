@@ -1,4 +1,4 @@
-use crate::error::{Result, ZecDevError};
+use crate::error::{Result, zeckitError};
 use std::process::Command;
 
 #[derive(Clone)]
@@ -36,7 +36,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -54,7 +54,7 @@ impl DockerCompose {
 
         if !build_output.status.success() {
             let error = String::from_utf8_lossy(&build_output.stderr);
-            return Err(ZecDevError::Docker(format!("Image build failed: {}", error)));
+            return Err(zeckitError::Docker(format!("Image build failed: {}", error)));
         }
 
         // THEN START SERVICES
@@ -69,7 +69,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -89,7 +89,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -106,7 +106,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -131,7 +131,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -156,7 +156,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecDevError::Docker(error.to_string()));
+            return Err(zeckitError::Docker(error.to_string()));
         }
 
         Ok(String::from_utf8_lossy(&output.stdout).to_string())

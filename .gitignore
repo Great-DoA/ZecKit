@@ -99,3 +99,5 @@ docker-compose.override.yml
 # Windows
 Thumbs.db
 ehthumbs_vista.db
+actions-runner/
+*.bak

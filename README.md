@@ -21,7 +21,7 @@
 - Project structure and documentation
 
 ** M2 - Real Transactions**
-- `zecdev` CLI tool with automated setup
+- `zeckit` CLI tool with automated setup
 - Real blockchain transactions via ZingoLib
 - Faucet API with actual on-chain broadcasting
 - Backend toggle (lightwalletd ↔ Zaino)
@@ -58,14 +58,14 @@ cargo build --release
 cd ..
 
 # Start devnet with automatic setup
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 #  First run takes 10-15 minutes (mining 101+ blocks)
 # ✓ Automatically extracts wallet address
 # ✓ Configures Zebra mining address
 # ✓ Waits for coinbase maturity
 
 # Run test suite
-./cli/target/release/zecdev test
+./cli/target/release/zeckit test
 
 # Verify faucet has funds
 curl http://localhost:8080/stats
@@ -88,7 +88,7 @@ curl -s http://localhost:8232 -X POST \
   -d '{"jsonrpc":"1.0","id":"1","method":"getblockcount","params":[]}' | jq .result
 
 # 4. Run tests
-./cli/target/release/zecdev test
+./cli/target/release/zeckit test
 ```
 
 ### Verify It's Working
@@ -109,7 +109,7 @@ curl -X POST http://localhost:8080/request \
 
 ## CLI Usage
 
-### zecdev Commands (M2)
+### zeckit Commands (M2)
 
 **Start Devnet (Automated):**
 ```bash
@@ -117,10 +117,10 @@ curl -X POST http://localhost:8080/request \
 cd cli && cargo build --release && cd ..
 
 # Start with Zaino backend (recommended - faster)
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 
 # OR start with Lightwalletd backend
-./cli/target/release/zecdev up --backend lwd
+./cli/target/release/zeckit up --backend lwd
 ```
 
 **What happens automatically:**
@@ -134,12 +134,12 @@ cd cli && cargo build --release && cd ..
 
 **Stop Services:**
 ```bash
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 ```
 
 **Run Test Suite (M1 + M2):**
 ```bash
-./cli/target/release/zecdev test
+./cli/target/release/zeckit test
 
 # Expected output:
 # [1/5] Zebra RPC connectivity... ✓ PASS (M1 test)
@@ -176,11 +176,11 @@ docker-compose --profile lwd down
 cd cli && cargo build --release && cd ..
 
 # 2. Start devnet (automatic setup!)
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 #  Takes 10-15 minutes on first run (mining + sync)
 
 # 3. Run test suite
-./cli/target/release/zecdev test
+./cli/target/release/zeckit test
 
 # 4. Check faucet balance
 curl http://localhost:8080/stats
@@ -191,33 +191,33 @@ curl -X POST http://localhost:8080/request \
   -d '{"address": "tmXXXXX...", "amount": 10.0}'
 
 # 6. Stop when done
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 ```
 
 ### Fresh Start (Reset Everything)
 
 ```bash
 # Stop services
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 
 # Remove volumes
 docker volume rm zeckit_zebra-data zeckit_zaino-data
 
 # Start fresh (automatic setup again)
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 ```
 
 ### Switch Backends
 
 ```bash
 # Stop current backend
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 
 # Start with different backend
-./cli/target/release/zecdev up --backend lwd
+./cli/target/release/zeckit up --backend lwd
 
 # Or back to Zaino
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 ```
 
 ---
@@ -227,7 +227,7 @@ docker volume rm zeckit_zebra-data zeckit_zaino-data
 ### Automated Tests
 
 ```bash
-./cli/target/release/zecdev test
+./cli/target/release/zeckit test
 ```
 
 **Test Breakdown:**
@@ -371,7 +371,7 @@ Response includes **real TXID** from blockchain:
            ▲
            │
       ┌────┴────┐
-      │ zecdev  │  (Rust CLI - M2)
+      │ zeckit  │  (Rust CLI - M2)
       └─────────┘
 ```
 
@@ -380,7 +380,7 @@ Response includes **real TXID** from blockchain:
 - **Lightwalletd/Zaino:** Light client backends (M2)
 - **Zingo Wallet:** Real transaction creation (M2)
 - **Faucet:** REST API for test funds (M2)
-- **zecdev CLI:** Automated orchestration (M2)
+- **zeckit CLI:** Automated orchestration (M2)
 
 ---
 
@@ -403,7 +403,7 @@ Zcash is migrating from zcashd to Zebra (official deprecation 2025), but builder
 - Manual Docker Compose
 
 **M2 Real Transactions:**
-- Automated CLI (`zecdev`)
+- Automated CLI (`zeckit`)
 - Real on-chain transactions
 - Faucet API with pexpect
 - Backend toggle
@@ -419,7 +419,7 @@ Zcash is migrating from zcashd to Zebra (official deprecation 2025), but builder
 
 ### First Run Setup
 
-When you run `./cli/target/release/zecdev up` for the first time:
+When you run `./cli/target/release/zeckit up` for the first time:
 
 1. **Initial mining takes 10-15 minutes** - This is required for coinbase maturity (Zcash consensus)
 2. **Automatic configuration** - The CLI extracts wallet address and configures Zebra automatically
@@ -435,26 +435,26 @@ To reset everything and start clean:
 
 ```bash
 # Stop services
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 
 # Remove volumes (blockchain data)
 docker volume rm zeckit_zebra-data zeckit_zaino-data
 
 # Start fresh
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 ```
 
 ### Switch Backends
 
 ```bash
 # Stop current backend
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 
 # Start with different backend
-./cli/target/release/zecdev up --backend lwd
+./cli/target/release/zeckit up --backend lwd
 
 # Or back to Zaino
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 ```
 
 ---
@@ -465,9 +465,9 @@ docker volume rm zeckit_zebra-data zeckit_zaino-data
 
 **Reset blockchain and start fresh:**
 ```bash
-./cli/target/release/zecdev down
+./cli/target/release/zeckit down
 docker volume rm zeckit_zebra-data zeckit_zaino-data
-./cli/target/release/zecdev up --backend zaino
+./cli/target/release/zeckit up --backend zaino
 ```
 
 **Check service logs:**
@@ -529,7 +529,7 @@ lsof -i :9067  # Backend
 - Manual Docker Compose workflow
 
 ###  Milestone 2: Real Transactions
-- `zecdev` CLI tool with automated setup
+- `zeckit` CLI tool with automated setup
 - Real blockchain transactions
 - Faucet API with balance tracking
 - Backend toggle (lightwalletd ↔ Zaino)
@@ -599,7 +599,7 @@ Benefits: Fresh state, fast I/O, no corruption
 Contributions welcome! Please:
 
 1. Fork and create feature branch
-2. Test locally: `./cli/target/release/zecdev up --backend zaino && ./cli/target/release/zecdev test`
+2. Test locally: `./cli/target/release/zeckit up --backend zaino && ./cli/target/release/zeckit test`
 3. Follow code style (Rust: `cargo fmt`, Python: `black`)
 4. Open PR with clear description
 
@@ -617,16 +617,16 @@ A: Yes! Uses actual ZingoLib wallet with real on-chain transactions (regtest net
 A: No. ZecKit is for development/testing only (regtest mode).
 
 **Q: How do I start the devnet?**  
-A: `./cli/target/release/zecdev up --backend zaino` (or `--backend lwd`)
+A: `./cli/target/release/zeckit up --backend zaino` (or `--backend lwd`)
 
 **Q: How long does first startup take?**  
 A: 10-15 minutes for mining 101 blocks (coinbase maturity requirement).
 
 **Q: Can I switch between lightwalletd and Zaino?**  
-A: Yes! `zecdev down` then `zecdev up --backend [lwd|zaino]`
+A: Yes! `zeckit down` then `zeckit up --backend [lwd|zaino]`
 
 **Q: How do I reset everything?**  
-A: `zecdev down && docker volume rm zeckit_zebra-data zeckit_zaino-data`
+A: `zeckit down && docker volume rm zeckit_zebra-data zeckit_zaino-data`
 
 **Q: Where can I find the technical details?**  
 A: Check [specs/technical-spec.md](specs/technical-spec.md) for the full implementation (27 pages!)

@@ -1,5 +1,5 @@
 [package]
-name = "zecdev"
+name = "zeckit"
 version = "0.1.0"
 edition = "2021"
 authors = ["Dapps over Apps"]
@@ -7,7 +7,7 @@ description = "ZecKit CLI - Developer toolkit for Zcash on Zebra"
 license = "MIT OR Apache-2.0"
 
 [[bin]]
-name = "zecdev"
+name = "zeckit"
 path = "src/main.rs"
 
 [dependencies]
