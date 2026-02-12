@@ -5,7 +5,7 @@ use zcash_protocol::value::Zatoshis;
 use crate::{AppState, error::FaucetError};
 
 /// GET /address - Returns wallet addresses
-pub async fn get_addresses(
+pub(crate) async fn get_addresses(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
     let wallet = state.wallet.read().await;
@@ -19,8 +19,8 @@ pub async fn get_addresses(
     })))
 }
 
-
-pub async fn sync_wallet(
+/// POST /sync - Syncs wallet with blockchain
+pub(crate) async fn sync_wallet(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
     let mut wallet = state.wallet.write().await;
@@ -34,7 +34,7 @@ pub async fn sync_wallet(
 }
 
 /// POST /shield - Shields transparent funds to Orchard
-pub async fn shield_funds(
+pub(crate) async fn shield_funds(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
     let mut wallet = state.wallet.write().await;
@@ -84,7 +84,7 @@ pub struct SendRequest {
 
 /// POST /send - Send shielded funds to another address
 /// This performs a shielded send from Orchard pool to recipient's address
-pub async fn send_shielded(
+pub(crate) async fn send_shielded(
     State(state): State<AppState>,
     Json(payload): Json<SendRequest>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {

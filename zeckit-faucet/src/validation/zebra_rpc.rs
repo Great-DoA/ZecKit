@@ -3,6 +3,10 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
+// Note: These structs and the validate_address_via_zebra function are currently unused
+// but kept for future Zebra RPC integration when direct node validation is needed.
+// They provide an alternative to the current zcash_address parsing validation.
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 struct ZebraRpcRequest {
     jsonrpc: String,
@@ -11,23 +15,32 @@ struct ZebraRpcRequest {
     params: Vec<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct ZebraRpcResponse {
     result: Option<ValidateAddressResult>,
     error: Option<RpcError>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct RpcError {
     message: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct ValidateAddressResult {
     isvalid: bool,
     address: Option<String>,
 }
 
+/// Validates a Zcash address via Zebra RPC node.
+/// 
+/// Note: Currently unused - kept for future integration with Zebra node validation.
+/// This provides an alternative to the current zcash_address parsing approach,
+/// allowing validation directly against a running Zebra node for additional checks.
+#[allow(dead_code)]
 pub async fn validate_address_via_zebra(
     address: &str,
     zebra_rpc_url: &str,
