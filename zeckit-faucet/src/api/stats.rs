@@ -10,7 +10,7 @@ pub struct HistoryQuery {
     limit: Option<usize>,
 }
 
-pub async fn get_stats(
+pub(crate) async fn get_stats(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
     let wallet = state.wallet.read().await;
@@ -40,7 +40,7 @@ pub async fn get_stats(
     })))
 }
 
-pub async fn get_history(
+pub(crate) async fn get_history(
     State(state): State<AppState>,
     Query(params): Query<HistoryQuery>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {

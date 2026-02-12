@@ -4,7 +4,7 @@ use serde_json::json;
 use crate::AppState;
 use crate::error::FaucetError;
 
-pub async fn health_check(
+pub(crate) async fn health_check(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
     let wallet = state.wallet.read().await;

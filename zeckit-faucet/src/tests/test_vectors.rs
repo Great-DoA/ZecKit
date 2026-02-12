@@ -1,5 +1,3 @@
-// Test against official Zcash test vectors
-// https://github.com/zcash/zcash-test-vectors/tree/master/test-vectors/zcash
 
 #[cfg(test)]
 mod address_validation_tests {

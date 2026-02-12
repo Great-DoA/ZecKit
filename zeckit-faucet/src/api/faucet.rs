@@ -78,7 +78,11 @@ pub(crate) async fn request_funds(
 }
 
 /// Get the faucet's own address and balance.
+/// 
 /// Useful for monitoring faucet health and available funds.
+/// Note: Currently unused but kept for future API endpoint that exposes faucet status.
+/// This will be used when we add a GET /faucet/status endpoint for monitoring.
+#[allow(dead_code)]
 pub async fn get_faucet_address(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
