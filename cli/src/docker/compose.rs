@@ -88,17 +88,14 @@ impl DockerCompose {
             println!("(This may take 10-20 minutes on first build)");
             println!();
             
-            // Build images silently
+            // Build with LIVE output instead of silent
             let build_status = Command::new("docker")
                 .arg("compose")
                 .arg("--profile")
                 .arg(profile)
                 .arg("build")
-                .arg("-q")  // Quiet mode
                 .current_dir(&self.project_dir)
-                .stdout(Stdio::null())  // Discard stdout
-                .stderr(Stdio::null())  // Discard stderr
-                .status()
+                .status()  // This shows output in real-time!
                 .map_err(|e| ZecKitError::Docker(format!("Failed to start build: {}", e)))?;
 
             if !build_status.success() {
@@ -107,27 +104,21 @@ impl DockerCompose {
 
             println!("✓ Images built successfully");
             println!();
-        } else {
-            println!("✓ Using cached Docker images (already built)");
-            println!("  Use --fresh to force rebuild");
-            println!();
         }
 
-        // Start services
+        // Start services with live output
         println!("Starting containers...");
-        let output = Command::new("docker")
+        Command::new("docker")
             .arg("compose")
             .arg("--profile")
             .arg(profile)
             .arg("up")
             .arg("-d")
             .current_dir(&self.project_dir)
-            .output()?;
-
-        if !output.status.success() {
-            let error = String::from_utf8_lossy(&output.stderr);
-            return Err(ZecKitError::Docker(error.to_string()));
-        }
+            .status()?
+            .success()
+            .then_some(())
+            .ok_or_else(|| ZecKitError::Docker("Failed to start containers".into()))?;
 
         Ok(())
     }
