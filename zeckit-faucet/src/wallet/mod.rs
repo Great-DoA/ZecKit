@@ -3,5 +3,3 @@ pub mod history;
 pub mod seed;
 
 pub use manager::WalletManager;
-pub use history::{TransactionRecord, TransactionHistory};
-pub use seed::SeedManager;

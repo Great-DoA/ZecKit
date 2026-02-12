@@ -10,6 +10,7 @@ use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::time::{sleep, Duration};
 use tonic::transport::Channel;
+use zcash_protocol::value::Zatoshis;
 
 mod config;
 mod wallet;
@@ -32,7 +33,7 @@ async fn wait_for_zaino(uri: &str, max_attempts: u32) -> anyhow::Result<u64> {
     use zcash_client_backend::proto::service::compact_tx_streamer_client::CompactTxStreamerClient;
     use zcash_client_backend::proto::service::ChainSpec;
     
-    info!("⏳ Waiting for Zaino at {} to be ready...", uri);
+    info!(" Waiting for Zaino at {} to be ready...", uri);
     
     for attempt in 1..=max_attempts {
         let ping_result = tokio::time::timeout(
@@ -58,7 +59,7 @@ async fn wait_for_zaino(uri: &str, max_attempts: u32) -> anyhow::Result<u64> {
             }
             Ok(Err(e)) => {
                 if attempt % 6 == 0 {  // Log every 30 seconds
-                    info!("⏳ Still waiting for Zaino... ({}s elapsed)", attempt * 5);
+                    info!(" Still waiting for Zaino... ({}s elapsed)", attempt * 5);
                     tracing::debug!("Zaino error: {}", e);
                 } else {
                     tracing::debug!("Zaino not ready (attempt {}): {}", attempt, e);
@@ -66,7 +67,7 @@ async fn wait_for_zaino(uri: &str, max_attempts: u32) -> anyhow::Result<u64> {
             }
             Err(_) => {
                 if attempt % 6 == 0 {
-                    info!("⏳ Still waiting for Zaino... ({}s elapsed) - connection timeout", attempt * 5);
+                    info!(" Still waiting for Zaino... ({}s elapsed) - connection timeout", attempt * 5);
                 } else {
                     tracing::debug!("Zaino connection timeout (attempt {})", attempt);
                 }
@@ -129,7 +130,7 @@ async fn main() -> anyhow::Result<()> {
     info!("  Address: {}", address);
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 5: Initial Sync (FIXED - using sync_and_await)
+    // STEP 5: Initial Sync 
     // ═══════════════════════════════════════════════════════════
     info!("🔄 Performing initial wallet sync...");
     
@@ -157,13 +158,13 @@ async fn main() -> anyhow::Result<()> {
     match wallet.read().await.get_balance().await {
         Ok(balance) => {
             info!("💰 Initial balance: {} ZEC", balance.total_zec());
-            if balance.transparent > 0 {
+            if balance.transparent > Zatoshis::ZERO {
                 info!("  Transparent: {} ZEC", balance.transparent_zec());
             }
-            if balance.sapling > 0 {
-                info!("  Sapling: {} ZEC", balance.sapling as f64 / 100_000_000.0);
+            if balance.sapling > Zatoshis::ZERO {
+                info!("  Sapling: {} ZEC", balance.sapling_zec());
             }
-            if balance.orchard > 0 {
+            if balance.orchard > Zatoshis::ZERO {
                 info!("  Orchard: {} ZEC", balance.orchard_zec());
             }
         }
@@ -182,7 +183,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 7: Start Background Sync Task (FIXED - using sync_and_await)
+    // STEP 7: Start Background Sync Task 
     // ═══════════════════════════════════════════════════════════
     let sync_wallet = wallet.clone();
     tokio::spawn(async move {
@@ -212,8 +213,8 @@ async fn main() -> anyhow::Result<()> {
                 Ok(mut wallet_guard) => {
                     // Perform sync_and_await with generous timeout
                     let sync_result = tokio::time::timeout(
-                        Duration::from_secs(90),  // ← CHANGED from 45s to 90s
-                        wallet_guard.sync()  // ← CHANGED from sync() to sync_and_await()
+                        Duration::from_secs(90), 
+                        wallet_guard.sync()
                     ).await;
                     
                     match sync_result {

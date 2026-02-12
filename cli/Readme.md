@@ -16,11 +16,13 @@ The binary will be at `target/release/zeckit` (or `zeckit.exe` on Windows).
 ### Add to PATH
 
 **Linux/macOS:**
+
 ```bash
 sudo cp target/release/zeckit /usr/local/bin/
 ```
 
 **Windows (PowerShell as Admin):**
+
 ```powershell
 copy target\release\zeckit.exe C:\Windows\System32\
 ```
@@ -67,12 +69,12 @@ zeckit test
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `up` | Start the devnet |
-| `down` | Stop the devnet |
+| Command  | Description         |
+| -------- | ------------------- |
+| `up`     | Start the devnet    |
+| `down`   | Stop the devnet     |
 | `status` | Show service status |
-| `test` | Run smoke tests |
+| `test`   | Run smoke tests     |
 
 ## Options
 

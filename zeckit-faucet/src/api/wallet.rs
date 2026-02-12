@@ -1,6 +1,7 @@
 use axum::{extract::State, Json};
 use serde::Deserialize;
 use serde_json::json;
+use zcash_protocol::value::Zatoshis;
 use crate::{AppState, error::FaucetError};
 
 /// GET /address - Returns wallet addresses
@@ -18,7 +19,7 @@ pub async fn get_addresses(
     })))
 }
 
-/// POST /sync - Syncs wallet with blockchain
+
 pub async fn sync_wallet(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, FaucetError> {
@@ -40,7 +41,7 @@ pub async fn shield_funds(
     
     let balance = wallet.get_balance().await?;
     
-    if balance.transparent == 0 {
+    if balance.transparent == Zatoshis::ZERO {
         return Ok(Json(json!({
             "status": "no_funds",
             "message": "No transparent funds to shield"
@@ -49,8 +50,11 @@ pub async fn shield_funds(
     
     // Calculate the amount that will actually be shielded (minus fee)
     let fee = 10_000u64; // 0.0001 ZEC
-    let shield_amount = if balance.transparent > fee {
-        balance.transparent - fee
+    let fee_zatoshis = Zatoshis::from_u64(fee)
+        .expect("Hardcoded fee should always be a valid Zatoshis amount");
+    let shield_amount = if balance.transparent > fee_zatoshis {
+        (balance.transparent - fee_zatoshis)
+            .expect("Checked with > fee, so subtraction cannot underflow")
     } else {
         return Err(FaucetError::Wallet(
             "Insufficient funds to cover transaction fee".to_string()
@@ -62,11 +66,11 @@ pub async fn shield_funds(
     Ok(Json(json!({
         "status": "shielded",
         "transparent_amount": balance.transparent_zec(),
-        "shielded_amount": shield_amount as f64 / 100_000_000.0,
+        "shielded_amount": shield_amount.into_u64() as f64 / 100_000_000.0,
         "fee": fee as f64 / 100_000_000.0,
         "txid": txid,
         "message": format!("Shielded {} ZEC from transparent to orchard (fee: {} ZEC)", 
-                          shield_amount as f64 / 100_000_000.0,
+                          shield_amount.into_u64() as f64 / 100_000_000.0,
                           fee as f64 / 100_000_000.0)
     })))
 }
@@ -89,7 +93,8 @@ pub async fn send_shielded(
     let balance = wallet.get_balance().await?;
     
     // Check if we have enough in Orchard pool
-    let amount_zatoshis = (payload.amount * 100_000_000.0) as u64;
+    let amount_zatoshis = Zatoshis::from_u64((payload.amount * 100_000_000.0) as u64)
+        .map_err(|_| FaucetError::Wallet("Invalid send amount".to_string()))?;
     if balance.orchard < amount_zatoshis {
         return Err(FaucetError::InsufficientBalance(format!(
             "Need {} ZEC in Orchard, have {} ZEC",

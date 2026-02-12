@@ -1,5 +1,5 @@
 use axum::{Json, extract::{State, Query}};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::AppState;

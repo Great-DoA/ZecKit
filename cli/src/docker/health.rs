@@ -1,4 +1,4 @@
-use crate::error::{Result, zeckitError};
+use crate::error::{Result, ZecKitError};
 use reqwest::Client;
 use indicatif::ProgressBar;
 use tokio::time::{sleep, Duration};
@@ -36,7 +36,7 @@ impl HealthChecker {
             }
         }
 
-        Err(zeckitError::ServiceNotReady("Zebra".into()))
+        Err(ZecKitError::ServiceNotReady("Zebra".into()))
     }
 
     pub async fn wait_for_faucet(&self, pb: &ProgressBar) -> Result<()> {
@@ -52,7 +52,7 @@ impl HealthChecker {
             }
         }
 
-        Err(zeckitError::ServiceNotReady("Faucet".into()))
+        Err(ZecKitError::ServiceNotReady("Faucet".into()))
     }
 
     pub async fn wait_for_backend(&self, backend: &str, pb: &ProgressBar) -> Result<()> {
@@ -68,7 +68,7 @@ impl HealthChecker {
             }
         }
 
-        Err(zeckitError::ServiceNotReady(format!("{} not ready", backend)))
+        Err(ZecKitError::ServiceNotReady(format!("{} not ready", backend)))
     }
 
     async fn check_zebra(&self) -> Result<()> {
@@ -88,7 +88,7 @@ impl HealthChecker {
         if resp.status().is_success() {
             Ok(())
         } else {
-            Err(zeckitError::HealthCheck("Zebra not ready".into()))
+            Err(ZecKitError::HealthCheck("Zebra not ready".into()))
         }
     }
 
@@ -101,13 +101,13 @@ impl HealthChecker {
             .await?;
 
         if !resp.status().is_success() {
-            return Err(zeckitError::HealthCheck("Faucet not ready".into()));
+            return Err(ZecKitError::HealthCheck("Faucet not ready".into()));
         }
 
         let json: Value = resp.json().await?;
         
         if json.get("status").and_then(|s| s.as_str()) == Some("unhealthy") {
-            return Err(zeckitError::HealthCheck("Faucet unhealthy".into()));
+            return Err(ZecKitError::HealthCheck("Faucet unhealthy".into()));
         }
 
         Ok(())
@@ -133,7 +133,7 @@ impl HealthChecker {
             }
             Err(_) => {
                 // Port not accepting connections yet
-                Err(zeckitError::HealthCheck(format!("{} not ready", backend_name)))
+                Err(ZecKitError::HealthCheck(format!("{} not ready", backend_name)))
             }
         }
     }

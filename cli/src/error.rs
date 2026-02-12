@@ -1,9 +1,9 @@
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, zeckitError>;
+pub type Result<T> = std::result::Result<T, ZecKitError>;
 
 #[derive(Error, Debug)]
-pub enum zeckitError {
+pub enum ZecKitError {
     #[error("Docker error: {0}")]
     Docker(String),
     
