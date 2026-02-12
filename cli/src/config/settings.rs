@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub zebra_rpc_url: String,
@@ -17,6 +18,7 @@ impl Default for Settings {
     }
 }
 
+#[allow(dead_code)]
 impl Settings {
     pub fn new() -> Self {
         Self::default()

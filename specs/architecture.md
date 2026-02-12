@@ -305,7 +305,7 @@ Note: Only Faucet API is exposed to LAN (0.0.0.0). Zebra and backend are localho
 All services use Docker DNS for service discovery:
 
 ```
-faucet → http://zaino:9067 (or http://lightwalletd:9067)
+faucet
 zaino → http://zebra:8232
 lightwalletd → http://zebra:8232
 ```

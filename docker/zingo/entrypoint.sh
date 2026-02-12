@@ -16,7 +16,7 @@ echo "  Backend Host: ${BACKEND_HOST}"
 echo "  Backend Port: ${BACKEND_PORT}"
 
 # Wait for backend (lightwalletd OR zaino)
-echo "⏳ Waiting for backend (${BACKEND_HOST})..."
+echo " Waiting for backend (${BACKEND_HOST})..."
 MAX_ATTEMPTS=60
 ATTEMPT=0
 
@@ -36,7 +36,7 @@ if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
 fi
 
 # Give backend time to initialize
-echo "⏳ Giving backend 30 seconds to fully initialize..."
+echo " Giving backend 30 seconds to fully initialize..."
 sleep 30
 
 # Create wallet if doesn't exist

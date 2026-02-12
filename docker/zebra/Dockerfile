@@ -13,14 +13,14 @@ WORKDIR /build
 RUN git clone https://github.com/ZcashFoundation/zebra.git
 WORKDIR /build/zebra
 
-# 🔥 CACHE DEPENDENCIES FIRST
+# CACHE DEPENDENCIES FIRST
 ENV CARGO_HOME=/usr/local/cargo
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/zebra/target \
     cargo fetch
 
-# 🔥 BUILD WITH PERSISTENT CACHES
+# BUILD WITH PERSISTENT CACHES
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/zebra/target \

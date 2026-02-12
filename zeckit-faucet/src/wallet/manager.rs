@@ -13,30 +13,35 @@ use zebra_chain::parameters::testnet::ConfiguredActivationHeights;
 use zcash_primitives::memo::MemoBytes;
 use zcash_client_backend::zip321::{TransactionRequest, Payment};
 use crate::wallet::seed::SeedManager;
-use bip0039::Mnemonic; 
+use zcash_protocol::value::Zatoshis;
 
 #[derive(Debug, Clone)]
 pub struct Balance {
-    pub transparent: u64,
-    pub sapling: u64,
-    pub orchard: u64,
+    pub transparent: Zatoshis,
+    pub sapling: Zatoshis,
+    pub orchard: Zatoshis,
 }
 
 impl Balance {
-    pub fn total_zatoshis(&self) -> u64 {
-        self.transparent + self.sapling + self.orchard
+    pub fn total_zatoshis(&self) -> Zatoshis {
+        (self.transparent + self.sapling + self.orchard)
+            .expect("Balance overflow - this should never happen")
     }
 
     pub fn total_zec(&self) -> f64 {
-        self.total_zatoshis() as f64 / 100_000_000.0
+        self.total_zatoshis().into_u64() as f64 / 100_000_000.0
     }
 
     pub fn orchard_zec(&self) -> f64 {
-        self.orchard as f64 / 100_000_000.0
+        self.orchard.into_u64() as f64 / 100_000_000.0
     }
 
     pub fn transparent_zec(&self) -> f64 {
-        self.transparent as f64 / 100_000_000.0
+        self.transparent.into_u64() as f64 / 100_000_000.0
+    }
+
+    pub fn sapling_zec(&self) -> f64 {
+        self.sapling.into_u64() as f64 / 100_000_000.0
     }
 }
 
@@ -156,14 +161,11 @@ impl WalletManager {
         
         Ok(Balance {
             transparent: account_balance.confirmed_transparent_balance
-                .map(|z| z.into_u64())
-                .unwrap_or(0),
+                .unwrap_or(Zatoshis::ZERO),
             sapling: account_balance.confirmed_sapling_balance
-                .map(|z| z.into_u64())
-                .unwrap_or(0),
+                .unwrap_or(Zatoshis::ZERO),
             orchard: account_balance.confirmed_orchard_balance
-                .map(|z| z.into_u64())
-                .unwrap_or(0),
+                .unwrap_or(Zatoshis::ZERO),
         })
     }
 
@@ -172,7 +174,7 @@ impl WalletManager {
         
         let balance = self.get_balance().await?;
         
-        if balance.transparent == 0 {
+        if balance.transparent == Zatoshis::ZERO {
             return Err(FaucetError::Wallet("No transparent funds to shield".to_string()));
         }
         
@@ -207,7 +209,7 @@ impl WalletManager {
         let amount_zatoshis = (amount_zec * 100_000_000.0) as u64;
 
         let balance = self.get_balance().await?;
-        if balance.orchard < amount_zatoshis {
+        if balance.orchard < Zatoshis::from_u64(amount_zatoshis).unwrap() {
             return Err(FaucetError::InsufficientBalance(format!(
                 "Need {} ZEC, have {} ZEC in Orchard pool",
                 amount_zec,

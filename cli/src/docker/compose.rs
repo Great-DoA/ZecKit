@@ -1,7 +1,5 @@
-use crate::error::{Result, zeckitError};
+use crate::error::{Result, ZecKitError};
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
-use std::thread;
 
 #[derive(Clone)]
 pub struct DockerCompose {
@@ -38,7 +36,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -101,10 +99,10 @@ impl DockerCompose {
                 .stdout(Stdio::null())  // Discard stdout
                 .stderr(Stdio::null())  // Discard stderr
                 .status()
-                .map_err(|e| zeckitError::Docker(format!("Failed to start build: {}", e)))?;
+                .map_err(|e| ZecKitError::Docker(format!("Failed to start build: {}", e)))?;
 
             if !build_status.success() {
-                return Err(zeckitError::Docker("Image build failed".into()));
+                return Err(ZecKitError::Docker("Image build failed".into()));
             }
 
             println!("✓ Images built successfully");
@@ -128,7 +126,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -148,7 +146,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         Ok(())
@@ -165,7 +163,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -178,6 +176,7 @@ impl DockerCompose {
         Ok(lines)
     }
 
+    #[allow(dead_code)]
     pub fn logs(&self, service: &str, tail: usize) -> Result<Vec<String>> {
         let output = Command::new("docker")
             .arg("compose")
@@ -190,7 +189,7 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -199,6 +198,7 @@ impl DockerCompose {
         Ok(lines)
     }
 
+    #[allow(dead_code)]
     pub fn exec(&self, service: &str, command: &[&str]) -> Result<String> {
         let mut cmd = Command::new("docker");
         cmd.arg("compose")
@@ -215,12 +215,13 @@ impl DockerCompose {
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(zeckitError::Docker(error.to_string()));
+            return Err(ZecKitError::Docker(error.to_string()));
         }
 
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     }
 
+    #[allow(dead_code)]
     pub fn is_running(&self) -> bool {
         Command::new("docker")
             .arg("compose")

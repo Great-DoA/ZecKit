@@ -13,7 +13,7 @@ echo "  Zebra RPC:  ${ZEBRA_RPC_HOST}:${ZEBRA_RPC_PORT}"
 echo "  gRPC Bind:  ${LWD_GRPC_BIND}"
 
 # Wait for Zebra
-echo "⏳ Waiting for Zebra RPC..."
+echo " Waiting for Zebra RPC..."
 MAX_ATTEMPTS=60
 ATTEMPT=0
 
@@ -42,10 +42,10 @@ BLOCK_COUNT=$(curl -s \
     -d '{"jsonrpc":"2.0","id":"info","method":"getblockcount","params":[]}' \
     "http://${ZEBRA_RPC_HOST}:${ZEBRA_RPC_PORT}" | grep -o '"result":[0-9]*' | cut -d: -f2 || echo "0")
 
-echo "📊 Current block height: ${BLOCK_COUNT}"
+echo "Current block height: ${BLOCK_COUNT}"
 
 # Wait for blocks
-echo "⏳ Waiting for at least 10 blocks to be mined..."
+echo " Waiting for at least 10 blocks to be mined..."
 while [ "${BLOCK_COUNT}" -lt "10" ]; do
     sleep 10
     BLOCK_COUNT=$(curl -s \

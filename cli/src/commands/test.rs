@@ -100,7 +100,7 @@ pub async fn execute() -> Result<()> {
     println!();
 
     if failed > 0 {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             format!("{} test(s) failed", failed)
         ));
     }
@@ -121,7 +121,7 @@ async fn test_zebra_rpc(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Zebra RPC not responding".into()
         ));
     }
@@ -136,7 +136,7 @@ async fn test_faucet_health(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Faucet health check failed".into()
         ));
     }
@@ -145,7 +145,7 @@ async fn test_faucet_health(client: &Client) -> Result<()> {
     
     // Verify key health fields
     if json.get("status").and_then(|v| v.as_str()) != Some("healthy") {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Faucet not reporting healthy status".into()
         ));
     }
@@ -160,7 +160,7 @@ async fn test_faucet_address(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Could not get faucet address".into()
         ));
     }
@@ -169,13 +169,13 @@ async fn test_faucet_address(client: &Client) -> Result<()> {
     
     // Verify both address types are present
     if json.get("unified_address").is_none() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Missing unified address in response".into()
         ));
     }
     
     if json.get("transparent_address").is_none() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Missing transparent address in response".into()
         ));
     }
@@ -189,7 +189,7 @@ async fn test_wallet_sync(client: &Client) -> Result<()> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Wallet sync failed".into()
         ));
     }
@@ -197,7 +197,7 @@ async fn test_wallet_sync(client: &Client) -> Result<()> {
     let json: Value = resp.json().await?;
     
     if json.get("status").and_then(|v| v.as_str()) != Some("synced") {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Wallet sync did not complete successfully".into()
         ));
     }
@@ -232,7 +232,7 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
         
         if !shield_resp.status().is_success() {
             let error_text = shield_resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(crate::error::zeckitError::HealthCheck(
+            return Err(crate::error::ZecKitError::HealthCheck(
                 format!("Shield API call failed: {}", error_text)
             ));
         }
@@ -274,13 +274,13 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
                 }
                 
                 println!();
-                print!("  [5/5] Wallet balance and shield... ");
+                print!("  [5/6] Wallet balance and shield... ");
                 return Ok(());
             }
             "no_funds" => {
                 println!("    No transparent funds to shield (already shielded)");
                 println!();
-                print!("  [5/5] Wallet balance and shield... ");
+                print!("  [5/6] Wallet balance and shield... ");
                 return Ok(());
             }
             _ => {
@@ -289,7 +289,7 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
                     println!("    Message: {}", msg);
                 }
                 println!();
-                print!("  [5/5] Wallet balance and shield... ");
+                print!("  [5/6] Wallet balance and shield... ");
                 return Ok(());
             }
         }
@@ -297,7 +297,7 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
     } else if orchard_before >= 0.001 {
         println!("    Wallet already has {} ZEC shielded in Orchard - PASS", orchard_before);
         println!();
-        print!("  [5/5] Wallet balance and shield... ");
+        print!("  [5/6] Wallet balance and shield... ");
         return Ok(());
         
     } else if transparent_before > 0.0 {
@@ -305,14 +305,14 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
         println!("    Need at least {} ZEC to cover shield + fee", min_shield_amount);
         println!("    SKIP (insufficient balance)");
         println!();
-        print!("  [5/5] Wallet balance and shield... ");
+        print!("  [5/6] Wallet balance and shield... ");
         return Ok(());
         
     } else {
         println!("    No balance found");
         println!("    SKIP (needs mining to complete)");
         println!();
-        print!("  [5/5] Wallet balance and shield... ");
+        print!("  [5/6] Wallet balance and shield... ");
         return Ok(());
     }
 }
@@ -321,7 +321,6 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
 struct WalletBalance {
     transparent: f64,
     orchard: f64,
-    total: f64,
 }
 
 /// Get wallet balance using the /stats endpoint
@@ -332,7 +331,7 @@ async fn get_wallet_balance_via_api(client: &Client) -> Result<WalletBalance> {
         .await?;
 
     if !resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Failed to get balance from stats endpoint".into()
         ));
     }
@@ -349,14 +348,9 @@ async fn get_wallet_balance_via_api(client: &Client) -> Result<WalletBalance> {
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
     
-    let total = json.get("current_balance")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0);
-    
     Ok(WalletBalance {
         transparent,
         orchard,
-        total,
     })
 }
 
@@ -392,7 +386,7 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
         .await?;
     
     if !addr_resp.status().is_success() {
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Failed to get recipient address".into()
         ));
     }
@@ -400,7 +394,7 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
     let addr_json: Value = addr_resp.json().await?;
     let recipient_address = addr_json.get("unified_address")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::error::zeckitError::HealthCheck(
+        .ok_or_else(|| crate::error::ZecKitError::HealthCheck(
             "No unified address in response".into()
         ))?;
     
@@ -422,7 +416,7 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
     
     if !send_resp.status().is_success() {
         let error_text = send_resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             format!("Shielded send failed: {}", error_text)
         ));
     }
@@ -457,7 +451,7 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
         }
         println!();
         print!("  [6/6] Shielded send (E2E)... ");
-        return Err(crate::error::zeckitError::HealthCheck(
+        return Err(crate::error::ZecKitError::HealthCheck(
             "Shielded send did not complete as expected".into()
         ));
     }

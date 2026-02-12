@@ -16,7 +16,7 @@ RUN git clone https://github.com/zingolabs/zingolib.git && \
     git checkout dev && \
     rustup set profile minimal
 
-# 🔥 CACHE DEPENDENCIES FIRST
+# CACHE DEPENDENCIES FIRST
 ENV CARGO_HOME=/usr/local/cargo
 WORKDIR /build/zingolib
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/zingolib/target \
     cargo fetch
 
-# 🔥 BUILD WITH PERSISTENT CACHES
+# BUILD WITH PERSISTENT CACHES
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/zingolib/target \

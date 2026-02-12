@@ -1,6 +1,6 @@
 use crate::docker::compose::DockerCompose;
 use crate::docker::health::HealthChecker;
-use crate::error::{Result, zeckitError};
+use crate::error::{Result, ZecKitError};
 use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
@@ -32,7 +32,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
         "zaino" => vec!["zebra", "faucet"],
         "none" => vec!["zebra", "faucet"],
         _ => {
-            return Err(zeckitError::Config(format!(
+            return Err(ZecKitError::Config(format!(
                 "Invalid backend: {}. Use 'lwd', 'zaino', or 'none'", 
                 backend
             )));
@@ -103,7 +103,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
             io::stdout().flush().ok();
             sleep(Duration::from_secs(1)).await;
         } else {
-            return Err(zeckitError::ServiceNotReady("Zebra not ready".into()));
+            return Err(ZecKitError::ServiceNotReady("Zebra not ready".into()));
         }
     }
     println!();
@@ -130,7 +130,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
                 io::stdout().flush().ok();
                 sleep(Duration::from_secs(1)).await;
             } else {
-                return Err(zeckitError::ServiceNotReady(format!("{} not ready", backend_name)));
+                return Err(ZecKitError::ServiceNotReady(format!("{} not ready", backend_name)));
             }
         }
         println!();
@@ -155,7 +155,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
             io::stdout().flush().ok();
             sleep(Duration::from_secs(1)).await;
         } else {
-            return Err(zeckitError::ServiceNotReady("Faucet not ready".into()));
+            return Err(ZecKitError::ServiceNotReady("Faucet not ready".into()));
         }
     }
     println!();
@@ -350,13 +350,13 @@ fn update_zebra_config_file(address: &str) -> Result<()> {
     
     // Read current config
     let config = fs::read_to_string(&config_path)
-        .map_err(|e| zeckitError::Config(format!("Could not read {:?}: {}", config_path, e)))?;
+        .map_err(|e| ZecKitError::Config(format!("Could not read {:?}: {}", config_path, e)))?;
     
     // Update miner address using regex
     let updated = if config.contains("miner_address") {
         // Replace existing miner_address
         let re = Regex::new(r#"miner_address\s*=\s*"[^"]*""#)
-            .map_err(|e| zeckitError::Config(format!("Regex error: {}", e)))?;
+            .map_err(|e| ZecKitError::Config(format!("Regex error: {}", e)))?;
         re.replace(&config, format!("miner_address = \"{}\"", address)).to_string()
     } else {
         // Add miner_address to [mining] section
@@ -373,7 +373,7 @@ fn update_zebra_config_file(address: &str) -> Result<()> {
     
     // Write back to file
     fs::write(&config_path, updated)
-        .map_err(|e| zeckitError::Config(format!("Could not write {:?}: {}", config_path, e)))?;
+        .map_err(|e| ZecKitError::Config(format!("Could not write {:?}: {}", config_path, e)))?;
     
     Ok(())
 }
@@ -404,7 +404,7 @@ async fn wait_for_mined_blocks(_pb: &ProgressBar, min_blocks: u64) -> Result<()>
         }
         
         if start.elapsed().as_secs() > MAX_WAIT_SECONDS {
-            return Err(zeckitError::ServiceNotReady(
+            return Err(ZecKitError::ServiceNotReady(
                 "Internal miner timeout - blocks not reaching maturity".into()
             ));
         }
@@ -480,7 +480,7 @@ async fn shield_transparent_funds() -> Result<()> {
     let json: serde_json::Value = resp.json().await?;
     
     if json["status"] == "no_funds" {
-        return Err(zeckitError::HealthCheck("No transparent funds to shield".into()));
+        return Err(ZecKitError::HealthCheck("No transparent funds to shield".into()));
     }
     
     if let Some(txid) = json.get("txid").and_then(|v| v.as_str()) {
@@ -491,7 +491,7 @@ async fn shield_transparent_funds() -> Result<()> {
         return Ok(());
     }
     
-    Err(zeckitError::HealthCheck("Shield transaction failed".into()))
+    Err(ZecKitError::HealthCheck("Shield transaction failed".into()))
 }
 
 async fn get_block_count(client: &Client) -> Result<u64> {
@@ -511,7 +511,7 @@ async fn get_block_count(client: &Client) -> Result<u64> {
     
     json.get("result")
         .and_then(|v| v.as_u64())
-        .ok_or_else(|| zeckitError::HealthCheck("Invalid block count response".into()))
+        .ok_or_else(|| ZecKitError::HealthCheck("Invalid block count response".into()))
 }
 
 async fn get_wallet_transparent_address_from_faucet() -> Result<String> {
@@ -522,13 +522,13 @@ async fn get_wallet_transparent_address_from_faucet() -> Result<String> {
         .timeout(Duration::from_secs(10))
         .send()
         .await
-        .map_err(|e| zeckitError::HealthCheck(format!("Faucet API call failed: {}", e)))?;
+        .map_err(|e| ZecKitError::HealthCheck(format!("Faucet API call failed: {}", e)))?;
     
     let json: serde_json::Value = resp.json().await?;
     
     json.get("transparent_address")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| zeckitError::HealthCheck("No transparent address in faucet response".into()))
+        .ok_or_else(|| ZecKitError::HealthCheck("No transparent address in faucet response".into()))
         .map(|s| s.to_string())
 }
 
@@ -540,13 +540,13 @@ async fn generate_ua_fixtures_from_faucet() -> Result<String> {
         .timeout(Duration::from_secs(10))
         .send()
         .await
-        .map_err(|e| zeckitError::HealthCheck(format!("Faucet API call failed: {}", e)))?;
+        .map_err(|e| ZecKitError::HealthCheck(format!("Faucet API call failed: {}", e)))?;
     
     let json: serde_json::Value = resp.json().await?;
     
     let ua_address = json.get("unified_address")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| zeckitError::HealthCheck("No unified address in faucet response".into()))?;
+        .ok_or_else(|| ZecKitError::HealthCheck("No unified address in faucet response".into()))?;
     
     let fixture = json!({
         "faucet_address": ua_address,
@@ -571,12 +571,12 @@ async fn sync_wallet_via_faucet() -> Result<()> {
         .timeout(Duration::from_secs(60))
         .send()
         .await
-        .map_err(|e| zeckitError::HealthCheck(format!("Faucet sync failed: {}", e)))?;
+        .map_err(|e| ZecKitError::HealthCheck(format!("Faucet sync failed: {}", e)))?;
     
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        return Err(zeckitError::HealthCheck(
+        return Err(ZecKitError::HealthCheck(
             format!("Wallet sync failed ({}): {}", status, body)
         ));
     }

@@ -1,6 +1,7 @@
 use std::process::Command;
 
 /// Check if Docker is installed and running
+#[allow(dead_code)]
 pub fn check_docker() -> bool {
     Command::new("docker")
         .arg("--version")
@@ -10,6 +11,7 @@ pub fn check_docker() -> bool {
 }
 
 /// Check if Docker Compose is available
+#[allow(dead_code)]
 pub fn check_docker_compose() -> bool {
     Command::new("docker")
         .arg("compose")
@@ -20,6 +22,7 @@ pub fn check_docker_compose() -> bool {
 }
 
 /// Print a formatted banner
+#[allow(dead_code)]
 pub fn print_banner(title: &str) {
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     println!("  {}", title);
@@ -28,6 +31,7 @@ pub fn print_banner(title: &str) {
 }
 
 /// Format bytes for display
+#[allow(dead_code)]
 pub fn format_bytes(bytes: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = KB * 1024;

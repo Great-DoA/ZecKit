@@ -6,19 +6,21 @@
 
 ## Project Status
 
-**Current Milestone:** M2 Complete - Shielded Transactions  
+**Current Milestone:** M2 Complete - Shielded Transactions
 
 ### What Works Now
 
 **M1 - Foundation**
+
 - Zebra regtest node in Docker
-- Health check automation  
+- Health check automation
 - Basic smoke tests
 - Project structure and documentation
 
-**M2 -  Shielded Transactions**
+**M2 - Shielded Transactions**
+
 - zeckit CLI tool with automated setup
--  on-chain shielded transactions via ZingoLib
+- on-chain shielded transactions via ZingoLib
 - Faucet API with actual blockchain broadcasting
 - Backend toggle (lightwalletd or Zaino)
 - Automated mining with coinbase maturity
@@ -28,6 +30,7 @@
 - Comprehensive test suite (6 tests)
 
 **M3 - GitHub Action (Next)**
+
 - Reusable GitHub Action for CI
 - Pre-mined blockchain snapshots
 - Advanced shielded workflows
@@ -110,6 +113,7 @@ curl -X POST http://localhost:8080/send \
 ```
 
 What happens:
+
 1. Zebra starts in regtest mode with auto-mining
 2. Backend (Zaino or Lightwalletd) connects to Zebra
 3. Faucet wallet initializes with deterministic seed
@@ -133,6 +137,7 @@ Subsequent startups: About 30 seconds (uses existing data)
 ```
 
 Output:
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ZecKit - Running Smoke Tests
@@ -185,16 +190,16 @@ docker volume rm zeckit_zebra-data zeckit_zaino-data zeckit_faucet-data
 
 The `zeckit test` command runs 6 comprehensive tests:
 
-| Test | What It Validates |
-|------|-------------------|
-| 1. Zebra RPC | Zebra node is running and RPC responds |
-| 2. Faucet Health | Faucet service is healthy |
+| Test                 | What It Validates                         |
+| -------------------- | ----------------------------------------- |
+| 1. Zebra RPC         | Zebra node is running and RPC responds    |
+| 2. Faucet Health     | Faucet service is healthy                 |
 | 3. Address Retrieval | Can get unified and transparent addresses |
-| 4. Wallet Sync | Wallet can sync with blockchain |
-| 5. Shield Funds | Can shield transparent to Orchard |
-| 6. Shielded Send | E2E golden flow: Orchard to Orchard |
+| 4. Wallet Sync       | Wallet can sync with blockchain           |
+| 5. Shield Funds      | Can shield transparent to Orchard         |
+| 6. Shielded Send     | E2E golden flow: Orchard to Orchard       |
 
-Tests 5 and 6 prove  shielded transactions work.
+Tests 5 and 6 prove shielded transactions work.
 
 ### Manual Testing
 
@@ -229,6 +234,7 @@ curl -X POST http://localhost:8080/send \
 ## Faucet API
 
 ### Base URL
+
 ```
 http://localhost:8080
 ```
@@ -236,11 +242,15 @@ http://localhost:8080
 ### Endpoints
 
 #### GET /health
+
 Check service health
+
 ```bash
 curl http://localhost:8080/health
 ```
+
 Response:
+
 ```json
 {
   "status": "healthy"
@@ -248,11 +258,15 @@ Response:
 ```
 
 #### GET /stats
+
 Get wallet statistics
+
 ```bash
 curl http://localhost:8080/stats
 ```
+
 Response:
+
 ```json
 {
   "current_balance": 681.24,
@@ -269,11 +283,15 @@ Response:
 ```
 
 #### GET /address
+
 Get faucet addresses
+
 ```bash
 curl http://localhost:8080/address
 ```
+
 Response:
+
 ```json
 {
   "unified_address": "uregtest1h8fnf3vrmswwj0r6nfvq24nxzmyjzaq5jvyxyc2afjtuze8tn93zjqt87kv9wm0ew4rkprpuphf08tc7f5nnd3j3kxnngyxf0cv9k9lc",
@@ -282,11 +300,15 @@ Response:
 ```
 
 #### POST /sync
+
 Sync wallet with blockchain
+
 ```bash
 curl -X POST http://localhost:8080/sync
 ```
+
 Response:
+
 ```json
 {
   "status": "synced",
@@ -295,11 +317,15 @@ Response:
 ```
 
 #### POST /shield
+
 Shield transparent funds to Orchard pool
+
 ```bash
 curl -X POST http://localhost:8080/shield
 ```
+
 Response:
+
 ```json
 {
   "status": "shielded",
@@ -312,7 +338,9 @@ Response:
 ```
 
 #### POST /send
+
 Send shielded transaction (Orchard to Orchard)
+
 ```bash
 curl -X POST http://localhost:8080/send \
   -H "Content-Type: application/json" \
@@ -322,7 +350,9 @@ curl -X POST http://localhost:8080/send \
     "memo": "Payment for services"
   }'
 ```
+
 Response:
+
 ```json
 {
   "status": "sent",
@@ -341,55 +371,13 @@ Response:
 
 ## Architecture
 
-### System Components
-
-```
-┌──────────────────────────────────────────┐
-│           Docker Compose                  │
-│                                           │
-│  ┌──────────┐        ┌──────────┐       │
-│  │  Zebra   │        │  Faucet  │       │
-│  │ regtest  │        │ (Rust)   │       │
-│  │  :8232   │        │  :8080   │       │
-│  └────┬─────┘        └────┬─────┘       │
-│       │                   │              │
-│       ▼                   ▼              │
-│  ┌──────────┐        ┌──────────┐       │
-│  │ Zaino or │        │ Zingolib │       │
-│  │Lightwald │        │  Wallet  │       │
-│  │  :9067   │        │          │       │
-│  └──────────┘        └──────────┘       │
-└──────────────────────────────────────────┘
-           ▲
-           │
-      ┌────┴────┐
-      │ zeckit  │  (CLI tool for testing)
-      └─────────┘
-```
-
-**Components:**
-- **Zebra:** Full node with internal miner (auto-mines blocks)
-- **Lightwalletd/Zaino:** Light client backends (interchangeable)
-- **Zingolib Wallet:**  transaction creation (embedded in faucet)
-- **Faucet:** REST API for shielded transactions (Rust + Axum)
-- **zeckit CLI:** Test runner
-
-### Data Flow: Shielded Send
-
-```
-1. User sends POST /send {address, amount, memo}
-2. Faucet checks Orchard balance
-3. Faucet creates shielded transaction (Zingolib)
-4. Faucet broadcasts to Zebra mempool
-5. Zebra mines block with transaction
-6. Faucet returns TXID to user
-```
+See [specs/architecture.md](specs/architecture.md) for detailed system architecture, component interactions, and data flows.
 
 ---
 
 ## What Makes This Different
 
-###  Shielded Transactions
+### Shielded Transactions
 
 Unlike other Zcash dev tools that only do transparent transactions, ZecKit supports:
 
@@ -421,6 +409,7 @@ Both work with the same wallet and faucet.
 ### Common Issues
 
 **Tests failing after restart**
+
 ```bash
 # Wait for auto-mining to complete
 sleep 60
@@ -430,6 +419,7 @@ sleep 60
 ```
 
 **Insufficient balance errors**
+
 ```bash
 # Check if mining is happening
 curl -s http://localhost:8232 -X POST \
@@ -440,6 +430,7 @@ curl -s http://localhost:8232 -X POST \
 ```
 
 **Need fresh start**
+
 ```bash
 ./cli/target/release/zeckit down
 docker volume rm zeckit_zebra-data zeckit_zaino-data zeckit_faucet-data
@@ -476,11 +467,13 @@ Zcash ecosystem needs a standard way to:
 ### Roadmap
 
 **M1 - Foundation** (Complete)
+
 - Zebra regtest setup
 - Basic health checks
 - Docker orchestration
 
-**M2 -  Transactions** (Complete)
+**M2 - Transactions** (Complete)
+
 - Shielded transaction support
 - Unified addresses
 - Auto-shielding workflow
@@ -488,6 +481,7 @@ Zcash ecosystem needs a standard way to:
 - Comprehensive tests
 
 **M3 - GitHub Action** (Next)
+
 - Reusable CI action
 - Pre-mined snapshots
 - Advanced workflows
@@ -551,6 +545,7 @@ Dual-licensed under MIT OR Apache-2.0
 **Built by:** Dapps over Apps team
 
 **Thanks to:**
+
 - Zcash Foundation (Zebra)
 - Electric Coin Company (Lightwalletd)
 - Zingo Labs (Zingolib and Zaino)
@@ -559,4 +554,4 @@ Dual-licensed under MIT OR Apache-2.0
 ---
 
 **Last Updated:** February 5, 2026  
-**Status:** M2 Complete -  Shielded Transactions
+**Status:** M2 Complete - Shielded Transactions

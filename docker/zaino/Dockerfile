@@ -23,14 +23,14 @@ WORKDIR /build/zaino
 # Checkout your fix branch
 RUN git checkout fix/regtest-insecure-grpc
 
-# 🔥 CACHE CARGO DEPENDENCIES FIRST (this is the magic)
+# CACHE CARGO DEPENDENCIES FIRST (this is the magic)
 ENV CARGO_HOME=/usr/local/cargo
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/zaino/target \
     cargo fetch
 
-# 🔥 BUILD WITH PERSISTENT CACHES
+# BUILD WITH PERSISTENT CACHES
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/zaino/target \

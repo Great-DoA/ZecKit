@@ -16,6 +16,8 @@
 
     ## Code of Conduct
 
+    This project follows the [Zcash Community Code of Conduct](https://zcashcommunitygrants.org/code-of-conduct/).
+
     Be respectful, collaborative, and constructive. We're building tools to help the Zcash ecosystem, and we welcome contributors of all skill levels.
 
     ---
@@ -210,31 +212,9 @@
 
     ## Getting Help
 
-    - **Questions:** Open a [GitHub Discussion](https://github.com/Supercoolokay/ZecKit/discussions)
+    - **Questions:** Open a [GitHub Discussion](https://github.com/Zecdev/ZecKit/discussions)
     - **Bugs:** Open an [Issue](https://github.com/Zecdev/ZecKit/issues)
     - **Community:** [Zcash Forum](https://forum.zcashcommunity.com/)
-
-    ---
-
-    ## Areas for Contribution
-
-    ### M1 (Current)
-    - [ ] Improve health check robustness
-    - [ ] Add more RPC test coverage
-    - [ ] macOS/Docker Desktop compatibility testing
-    - [ ] Documentation improvements
-
-    ### M2 (Next)
-    - [ ] Python faucet implementation
-    - [ ] CLI tool development
-    - [ ] UA fixture generation
-    - [ ] lightwalletd integration
-
-    ### All Milestones
-    - [ ] Bug fixes
-    - [ ] Performance improvements
-    - [ ] Documentation
-    - [ ] Test coverage
 
     ---
 
