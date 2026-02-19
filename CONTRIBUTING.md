@@ -1,241 +1,221 @@
-# Contributing to ZecKit
+    # Contributing to ZecKit
 
-Thank you for your interest in contributing to ZecKit! This document provides guidelines and instructions for contributing.
+    Thank you for your interest in contributing to ZecKit! This document provides guidelines and instructions for contributing.
 
-## Table of Contents
+    ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Coding Standards](#coding-standards)
-- [Testing](#testing)
-- [Submitting Changes](#submitting-changes)
-- [Milestone Roadmap](#milestone-roadmap)
+    - [Code of Conduct](#code-of-conduct)
+    - [Getting Started](#getting-started)
+    - [Development Workflow](#development-workflow)
+    - [Coding Standards](#coding-standards)
+    - [Testing](#testing)
+    - [Submitting Changes](#submitting-changes)
+    - [Milestone Roadmap](#milestone-roadmap)
 
----
+    ---
 
-## Code of Conduct
+    ## Code of Conduct
 
-Be respectful, collaborative, and constructive. We're building tools to help the Zcash ecosystem, and we welcome contributors of all skill levels.
+    This project follows the [Zcash Community Code of Conduct](https://zcashcommunitygrants.org/code-of-conduct/).
 
----
+    Be respectful, collaborative, and constructive. We're building tools to help the Zcash ecosystem, and we welcome contributors of all skill levels.
 
-## Getting Started
+    ---
 
-### Prerequisites
+    ## Getting Started
 
-- Linux (Ubuntu 22.04+), WSL, or macOS
-- Docker Engine ≥ 24.x + Compose v2
-- 2 CPU cores, 4GB RAM, 5GB disk
-- Git
+    ### Prerequisites
 
-### Setup Development Environment
+    - Linux (Ubuntu 22.04+), WSL, or macOS
+    - Docker Engine ≥ 24.x + Compose v2
+    - 2 CPU cores, 4GB RAM, 5GB disk
+    - Git
 
-```bash
-# Fork and clone
-git clone https://github.com/Supercoolkayy/ZecKit.git
-cd ZecKit
+    ### Setup Development Environment
 
-# Run setup
-./scripts/setup-dev.sh
+    ```bash
+    # Fork and clone
+    git clone https://github.com/Zecdev/ZecKit.git
+    cd ZecKit
 
-# Start devnet
-docker compose up -d
+    # Run setup
+    ./scripts/setup-dev.sh
 
-# Verify
-./docker/healthchecks/check-zebra.sh
-./tests/smoke/basic-health.sh
-```
+    # Start devnet
+    docker compose up -d
 
----
+    # Verify
+    ./docker/healthchecks/check-zebra.sh
+    ./tests/smoke/basic-health.sh
+    ```
 
-## Development Workflow
+    ---
 
-### 1. Create a Branch
+    ## Development Workflow
 
-```bash
-git checkout -b feature/my-feature
-# or
-git checkout -b fix/issue-123
-```
+    ### 1. Create a Branch
 
-Branch naming conventions:
-- `feature/` - New features
-- `fix/` - Bug fixes
-- `docs/` - Documentation only
-- `refactor/` - Code refactoring
-- `test/` - Test improvements
+    ```bash
+    git checkout -b feature/my-feature
+    # or
+    git checkout -b fix/issue-123
+    ```
 
-### 2. Make Changes
+    Branch naming conventions:
+    - `feature/` - New features
+    - `fix/` - Bug fixes
+    - `docs/` - Documentation only
+    - `refactor/` - Code refactoring
+    - `test/` - Test improvements
 
-- Write clear, self-documenting code
-- Add comments for complex logic
-- Update documentation as needed
+    ### 2. Make Changes
 
-### 3. Test Locally
+    - Write clear, self-documenting code
+    - Add comments for complex logic
+    - Update documentation as needed
 
-```bash
-# Run smoke tests
-./tests/smoke/basic-health.sh
+    ### 3. Test Locally
 
-# Check logs
-docker compose logs
+    ```bash
+    # Run smoke tests
+    ./tests/smoke/basic-health.sh
 
-# Clean restart
-docker compose down -v && docker compose up -d
-```
+    # Check logs
+    docker compose logs
 
-### 4. Commit
+    # Clean restart
+    docker compose down -v && docker compose up -d
+    ```
 
-```bash
-git add .
-git commit -m "feat: add health check retry logic"
-```
+    ### 4. Commit
 
-Commit message format:
-```
-<type>: <description>
+    ```bash
+    git add .
+    git commit -m "feat: add health check retry logic"
+    ```
 
-[optional body]
+    Commit message format:
+    ```
+    <type>: <description>
 
-[optional footer]
-```
+    [optional body]
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+    [optional footer]
+    ```
 
-### 5. Push and Create PR
+    Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
-```bash
-git push origin feature/my-feature
-```
+    ### 5. Push and Create PR
 
-Then open a Pull Request on GitHub.
+    ```bash
+    git push origin feature/my-feature
+    ```
 
----
+    Then open a Pull Request on GitHub.
 
-## Coding Standards
+    ---
 
-### Shell Scripts
+    ## Coding Standards
 
-- Use `#!/bin/bash` shebang
-- Enable strict mode: `set -e`
-- Add comments for non-obvious logic
-- Use meaningful variable names
-- Make scripts executable: `chmod +x`
+    ### Shell Scripts
 
-### Docker / Compose
+    - Use `#!/bin/bash` shebang
+    - Enable strict mode: `set -e`
+    - Add comments for non-obvious logic
+    - Use meaningful variable names
+    - Make scripts executable: `chmod +x`
 
-- Pin image versions (no `latest` tags)
-- Bind to localhost (`127.0.0.1`) for exposed ports
-- Use health checks for all services
-- Document any non-standard configurations
+    ### Docker / Compose
 
-### Documentation
+    - Pin image versions (no `latest` tags)
+    - Bind to localhost (`127.0.0.1`) for exposed ports
+    - Use health checks for all services
+    - Document any non-standard configurations
 
-- Use Markdown for all docs
-- Keep README.md updated
-- Add inline comments in configs
-- Document security considerations
+    ### Documentation
 
----
+    - Use Markdown for all docs
+    - Keep README.md updated
+    - Add inline comments in configs
+    - Document security considerations
 
-## Testing
+    ---
 
-### Required Tests
+    ## Testing
 
-All PRs must pass:
+    ### Required Tests
 
-1. **Smoke tests:** `./tests/smoke/basic-health.sh`
-2. **Health checks:** `./docker/healthchecks/check-zebra.sh`
-3. **CI pipeline:** GitHub Actions workflow must pass
+    All PRs must pass:
 
-### Adding New Tests
+    1. **Smoke tests:** `./tests/smoke/basic-health.sh`
+    2. **Health checks:** `./docker/healthchecks/check-zebra.sh`
+    3. **CI pipeline:** GitHub Actions workflow must pass
 
-When adding features, include tests:
+    ### Adding New Tests
 
-```bash
-# Add test to tests/smoke/
-nano tests/smoke/my-new-test.sh
+    When adding features, include tests:
 
-# Make executable
-chmod +x tests/smoke/my-new-test.sh
+    ```bash
+    # Add test to tests/smoke/
+    nano tests/smoke/my-new-test.sh
 
-# Verify it works
-./tests/smoke/my-new-test.sh
-```
+    # Make executable
+    chmod +x tests/smoke/my-new-test.sh
 
----
+    # Verify it works
+    ./tests/smoke/my-new-test.sh
+    ```
 
-## Submitting Changes
+    ---
 
-### Pull Request Checklist
+    ## Submitting Changes
 
-- [ ] Branch is up to date with `main`
-- [ ] Smoke tests pass locally
-- [ ] Documentation updated (if applicable)
-- [ ] Commit messages are clear
-- [ ] PR description explains changes
-- [ ] No breaking changes (or clearly documented)
+    ### Pull Request Checklist
 
-### PR Review Process
+    - [ ] Branch is up to date with `main`
+    - [ ] Smoke tests pass locally
+    - [ ] Documentation updated (if applicable)
+    - [ ] Commit messages are clear
+    - [ ] PR description explains changes
+    - [ ] No breaking changes (or clearly documented)
 
-1. Automated tests run via CI
-2. Code review by maintainers
-3. Address feedback if needed
-4. Approved PRs are merged
+    ### PR Review Process
 
----
+    1. Automated tests run via CI
+    2. Code review by maintainers
+    3. Address feedback if needed
+    4. Approved PRs are merged
 
-## Milestone Roadmap
+    ---
 
-### Current: M1 - Foundation ✅
-- Repository structure
-- Zebra regtest devnet
-- Health checks & smoke tests
-- CI pipeline
+    ## Milestone Roadmap
 
-### Next: M2 - CLI Tool
-Contributions welcome:
-- Python Flask faucet implementation
-- `zecdev` CLI tool (Rust or Bash)
-- Pre-mined fund automation
+    ### Current: M1 - Foundation
+    - Repository structure
+    - Zebra regtest devnet
+    - Health checks & smoke tests
+    - CI pipeline
 
-### Future: M3-M5
-- GitHub Action packaging
-- E2E shielded flows
-- Comprehensive documentation
-- Maintenance window
+    ### Next: M2 - CLI Tool
+    Contributions welcome:
+    - Python Flask faucet implementation
+    - `zeckit` CLI tool (Rust or Bash)
+    - Pre-mined fund automation
 
----
+    ### Future: M3-M5
+    - GitHub Action packaging
+    - E2E shielded flows
+    - Comprehensive documentation
+    - Maintenance window
 
-## Getting Help
+    ---
 
-- **Questions:** Open a [GitHub Discussion](https://github.com/Supercoolokay/ZecKit/discussions)
-- **Bugs:** Open an [Issue](https://github.com/Supercoolkayy/ZecKit/issues)
-- **Community:** [Zcash Forum](https://forum.zcashcommunity.com/)
+    ## Getting Help
 
----
+    - **Questions:** Open a [GitHub Discussion](https://github.com/Zecdev/ZecKit/discussions)
+    - **Bugs:** Open an [Issue](https://github.com/Zecdev/ZecKit/issues)
+    - **Community:** [Zcash Forum](https://forum.zcashcommunity.com/)
 
-## Areas for Contribution
+    ---
 
-### M1 (Current)
-- [ ] Improve health check robustness
-- [ ] Add more RPC test coverage
-- [ ] macOS/Docker Desktop compatibility testing
-- [ ] Documentation improvements
-
-### M2 (Next)
-- [ ] Python faucet implementation
-- [ ] CLI tool development
-- [ ] UA fixture generation
-- [ ] lightwalletd integration
-
-### All Milestones
-- [ ] Bug fixes
-- [ ] Performance improvements
-- [ ] Documentation
-- [ ] Test coverage
-
----
-
-Thank you for contributing to ZecKit! 🚀
+    Thank you for contributing to ZecKit!
