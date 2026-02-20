@@ -97,12 +97,14 @@ jobs:
 
       - name: Select best prebuilt tag
         run: |
+          image_prefix="$(echo "${IMAGE_PREFIX}" | tr '[:upper:]' '[:lower:]')"
+          echo "ZECKIT_IMAGE_PREFIX=${image_prefix}" >> "$GITHUB_ENV"
           short_sha="${GITHUB_SHA::7}"
           branch_tag="$(echo "${GITHUB_REF_NAME}" | tr '/' '-')"
           candidates=("sha-${short_sha}" "${branch_tag}" "main" "latest")
 
           for tag in "${candidates[@]}"; do
-            if docker manifest inspect "${IMAGE_PREFIX}-zaino:${tag}" >/dev/null 2>&1; then
+            if docker manifest inspect "${image_prefix}-zaino:${tag}" >/dev/null 2>&1; then
               echo "Using prebuilt tag: ${tag}"
               echo "ZECKIT_IMAGE_TAG=${tag}" >> "$GITHUB_ENV"
               exit 0
