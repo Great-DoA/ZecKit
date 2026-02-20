@@ -18,7 +18,7 @@ permissions:
 jobs:
   e2e-tests:
     name: ZecKit E2E Test Suite
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/zeckit
     
