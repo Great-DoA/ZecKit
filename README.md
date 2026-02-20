@@ -2,6 +2,9 @@
 
 > A toolkit for Zcash Regtest development
 
+[![ZecKit E2E](https://img.shields.io/badge/GitHub%20Marketplace-ZecKit%20E2E-blue?logo=github)](https://github.com/marketplace/actions/zeckit-e2e)
+[![Action CI](https://github.com/zecdev/ZecKit/actions/workflows/ci-action-test.yml/badge.svg)](https://github.com/zecdev/ZecKit/actions/workflows/ci-action-test.yml)
+
 ---
 
 ## Project Status
@@ -29,11 +32,13 @@
 - Shielded send (Orchard to Orchard)
 - Comprehensive test suite (6 tests)
 
-**M3 - GitHub Action (Next)**
+**M3 - GitHub Action**
 
-- Reusable GitHub Action for CI
-- Pre-mined blockchain snapshots
-- Advanced shielded workflows
+- Reusable GitHub Action for CI — published on [GitHub Marketplace](https://github.com/marketplace/actions/zeckit-e2e)
+- Golden E2E flow: generate UA → fund → autoshield → shielded send → rescan/sync → verify
+- Both backends (zaino + lwd) exercised in matrix
+- Structured outputs (txids, addresses, balances) and log artifacts
+- Full documentation in [docs/github-action.md](docs/github-action.md)
 
 ---
 
