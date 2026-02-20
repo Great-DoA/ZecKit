@@ -16,7 +16,7 @@ permissions:
 jobs:
   smoke-test:
     name: Zebra Smoke Test
-    runs-on: self-hosted  # Runs on your WSL runner
+    runs-on: ubuntu-latest  # Runs on your WSL runner
     env:
       IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/zeckit
     
