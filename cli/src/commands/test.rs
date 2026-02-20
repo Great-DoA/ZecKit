@@ -275,13 +275,13 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
                 
                 println!();
                 print!("  [5/6] Wallet balance and shield... ");
-                return Ok(());
+                Ok(())
             }
             "no_funds" => {
                 println!("    No transparent funds to shield (already shielded)");
                 println!();
                 print!("  [5/6] Wallet balance and shield... ");
-                return Ok(());
+                Ok(())
             }
             _ => {
                 println!("    Shield status: {}", status);
@@ -290,7 +290,7 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
                 }
                 println!();
                 print!("  [5/6] Wallet balance and shield... ");
-                return Ok(());
+                Ok(())
             }
         }
         
@@ -298,7 +298,7 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
         println!("    Wallet already has {} ZEC shielded in Orchard - PASS", orchard_before);
         println!();
         print!("  [5/6] Wallet balance and shield... ");
-        return Ok(());
+        Ok(())
         
     } else if transparent_before > 0.0 {
         println!("    Wallet has {} ZEC transparent (too small to shield)", transparent_before);
@@ -306,14 +306,14 @@ async fn test_wallet_shield(client: &Client) -> Result<()> {
         println!("    SKIP (insufficient balance)");
         println!();
         print!("  [5/6] Wallet balance and shield... ");
-        return Ok(());
+        Ok(())
         
     } else {
         println!("    No balance found");
         println!("    SKIP (needs mining to complete)");
         println!();
         print!("  [5/6] Wallet balance and shield... ");
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -443,7 +443,7 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
         
         println!();
         print!("  [6/6] Shielded send (E2E)... ");
-        return Ok(());
+        Ok(())
     } else {
         println!("    Unexpected status: {:?}", status);
         if let Some(msg) = send_json.get("message").and_then(|v| v.as_str()) {
@@ -451,8 +451,8 @@ async fn test_shielded_send(client: &Client) -> Result<()> {
         }
         println!();
         print!("  [6/6] Shielded send (E2E)... ");
-        return Err(crate::error::ZecKitError::HealthCheck(
+        Err(crate::error::ZecKitError::HealthCheck(
             "Shielded send did not complete as expected".into()
-        ));
+        ))
     }
 }

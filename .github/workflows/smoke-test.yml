@@ -9,10 +9,16 @@ on:
       - main
   workflow_dispatch:  # Allow manual triggers
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   smoke-test:
     name: Zebra Smoke Test
     runs-on: self-hosted  # Runs on your WSL runner
+    env:
+      IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/zeckit
     
     # Timeout after 10 minutes (devnet should be up much faster)
     timeout-minutes: 10
@@ -35,6 +41,34 @@ jobs:
           docker volume rm zeckit-zebra-data 2>/dev/null || true
           docker network rm zeckit-network 2>/dev/null || true
           docker system prune -f || true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Select best prebuilt tag
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          branch_tag="$(echo "${GITHUB_REF_NAME}" | tr '/' '-')"
+          candidates=("sha-${short_sha}" "${branch_tag}" "main" "latest")
+
+          for tag in "${candidates[@]}"; do
+            if docker manifest inspect "${IMAGE_PREFIX}-zebra:${tag}" >/dev/null 2>&1; then
+              echo "Using prebuilt tag: ${tag}"
+              echo "ZECKIT_IMAGE_TAG=${tag}" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+
+          echo "No prebuilt tag found; will fall back to local build"
+          echo "ZECKIT_IMAGE_TAG=sha-${short_sha}" >> "$GITHUB_ENV"
+
+      - name: Pull prebuilt image
+        run: |
+          docker compose pull zebra || echo "Prebuilt image not found; compose will build locally."
       
       - name: Start zeckit devnet
         run: |

@@ -11,10 +11,16 @@ on:
       - develop
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   e2e-tests:
     name: ZecKit E2E Test Suite
     runs-on: self-hosted
+    env:
+      IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/zeckit
     
     timeout-minutes: 60
     
@@ -81,6 +87,34 @@ jobs:
           
           echo "✓ Cleanup complete (images preserved)"
           echo ""
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Select best prebuilt tag
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          branch_tag="$(echo "${GITHUB_REF_NAME}" | tr '/' '-')"
+          candidates=("sha-${short_sha}" "${branch_tag}" "main" "latest")
+
+          for tag in "${candidates[@]}"; do
+            if docker manifest inspect "${IMAGE_PREFIX}-zaino:${tag}" >/dev/null 2>&1; then
+              echo "Using prebuilt tag: ${tag}"
+              echo "ZECKIT_IMAGE_TAG=${tag}" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+
+          echo "No prebuilt tag found; will fall back to local build"
+          echo "ZECKIT_IMAGE_TAG=sha-${short_sha}" >> "$GITHUB_ENV"
+
+      - name: Pull prebuilt images (zaino profile)
+        run: |
+          docker compose --profile zaino pull || echo "Prebuilt images not found; compose will build locally."
       
       - name: Build CLI binary
         run: |
