@@ -104,3 +104,4 @@ actions-runner/
 
 # Zcash proving parameters (large binary files)
 zcash-params/
+sample/
