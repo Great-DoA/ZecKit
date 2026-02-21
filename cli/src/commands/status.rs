@@ -45,11 +45,11 @@ async fn print_service_status(client: &Client, name: &str, url: &str) {
             if let Ok(json) = resp.json::<Value>().await {
                 println!("  {} {} - {}", "✓".green(), name.bold(), format_json(&json));
             } else {
-                println!("  {} {} - {}", "✓".green(), name.bold(), "OK");
+                println!("  {} {} - OK", "✓".green(), name.bold());
             }
         }
         _ => {
-            println!("  {} {} - {}", "✗".red(), name.bold(), "Not responding");
+            println!("  {} {} - Not responding", "✗".red(), name.bold());
         }
     }
 }

@@ -22,6 +22,7 @@ services:
   # ZEBRA NODE
   # ========================================
   zebra:
+    image: ${ZECKIT_IMAGE_PREFIX:-ghcr.io/zecdev/zeckit}-zebra:${ZECKIT_IMAGE_TAG:-main}
     build:
       context: ./docker/zebra
       dockerfile: Dockerfile
@@ -47,6 +48,7 @@ services:
   # LIGHTWALLETD (Profile: lwd)
   # ========================================
   lightwalletd:
+    image: ${ZECKIT_IMAGE_PREFIX:-ghcr.io/zecdev/zeckit}-lightwalletd:${ZECKIT_IMAGE_TAG:-main}
     build:
       context: ./docker/lightwalletd
       dockerfile: Dockerfile
@@ -78,6 +80,7 @@ services:
   # ZAINO INDEXER (Profile: zaino)
   # ========================================
   zaino:
+    image: ${ZECKIT_IMAGE_PREFIX:-ghcr.io/zecdev/zeckit}-zaino:${ZECKIT_IMAGE_TAG:-main}
     build:
       context: ./docker/zaino
       dockerfile: Dockerfile
@@ -116,6 +119,7 @@ services:
   #  FAUCET SERVICE - LWD Profile
   # ========================================
   faucet-lwd:
+    image: ${ZECKIT_IMAGE_PREFIX:-ghcr.io/zecdev/zeckit}-faucet:${ZECKIT_IMAGE_TAG:-main}
     build:
       context: ./zeckit-faucet
       dockerfile: Dockerfile
@@ -147,6 +151,7 @@ services:
   #  FAUCET SERVICE - Zaino Profile
   # ========================================
   faucet-zaino:
+    image: ${ZECKIT_IMAGE_PREFIX:-ghcr.io/zecdev/zeckit}-faucet:${ZECKIT_IMAGE_TAG:-main}
     build:
       context: ./zeckit-faucet
       dockerfile: Dockerfile

@@ -1,0 +1,308 @@
+# ============================================================
+# ZecKit Sample Repo – Failure Drill
+# ============================================================
+#
+# PURPOSE: Verify that ZecKit CI reliably produces diagnostic
+# artifacts (logs + JSON summary) when a run fails.
+#
+# Two distinct failure modes are exercised, each in its own job:
+#
+#   drill-send-overflow
+#     Injects an impossible send_amount (999 ZEC) against a
+#     freshly-started devnet that will only ever have ~1 ZEC.
+#     Fails deterministically at E2E step 4 (shielded send).
+#     Artifacts show faucet-stats.json with actual vs requested
+#     balance, which is the most common real-world failure.
+#
+#   drill-startup-timeout
+#     Sets startup_timeout_minutes='1' for the lightwalletd
+#     backend, which normally needs 3-4 minutes to start.
+#     Fails deterministically at the devnet health-wait step.
+#     Artifacts capture partial service logs showing exactly
+#     which health-check did not pass in time.
+#
+# Both jobs use upload_artifacts: always so logs land even if
+# the step that uploads them is reached after a failure.
+#
+# After each drill, an "assert-artifacts" step downloads the
+# artifact and verifies key files are present, proving the
+# collection path is working end-to-end.
+# ============================================================
+
+name: Failure Drill – Artifact Collection Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      drill:
+        description: 'Which drill to run'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - send-overflow
+          - startup-timeout
+
+permissions:
+  contents: read
+  packages: read
+  # write is needed so gh CLI can download artifacts in the
+  # assert-artifacts verification step
+  actions: read
+
+# ============================================================
+# DRILL 1 – Impossible send amount (send_overflow)
+# ============================================================
+jobs:
+
+  drill-send-overflow:
+    name: "Drill: send_amount overflow"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # This job is expected to fail the E2E flow deliberately.
+    # We still want the workflow run to be green so we can
+    # assert on its output — the gate job enforces the contract.
+    continue-on-error: true
+    if: >
+      github.event.inputs.drill == 'both' ||
+      github.event.inputs.drill == 'send-overflow'
+
+    outputs:
+      test_result: ${{ steps.zeckit.outputs.test_result }}
+      run_number:  ${{ github.run_number }}
+
+    steps:
+      - name: Checkout sample repo
+        uses: actions/checkout@v4
+
+      - name: "🔴 DRILL: inject impossible send amount (999 ZEC)"
+        run: |
+          echo "::notice::Failure drill – injecting send_amount=999 ZEC."
+          echo "::notice::Devnet wallet will have ~0.05-5 ZEC; send must fail."
+          echo "::notice::upload_artifacts=always ensures logs land regardless."
+
+      # ── Run action with deliberately impossible send_amount ──
+      - name: ZecKit E2E – send overflow drill
+        id: zeckit
+        uses: zecdev/ZecKit@v1
+        with:
+          backend:                 zaino
+          startup_timeout_minutes: '10'
+          block_wait_seconds:      '75'
+          send_amount:             '999.0'   # << INJECTED FAILURE
+          send_memo:               'Failure drill – send overflow'
+          # Always upload so we get artifacts even on the
+          # successful pre-failure steps.
+          upload_artifacts:        always
+          ghcr_token:              ${{ secrets.GITHUB_TOKEN }}
+        # Do not fail the step here; we assert the result below.
+        continue-on-error: true
+
+      # ── Verify the action correctly reported failure ──────
+      - name: Assert E2E reported failure
+        shell: bash
+        run: |
+          result="${{ steps.zeckit.outputs.test_result }}"
+          echo "test_result from action: $result"
+          if [[ "$result" == "pass" ]]; then
+            echo "::error::Drill BROKEN: action reported 'pass' when it should have failed."
+            echo "::error::This means the send_amount guard is not working correctly."
+            exit 1
+          fi
+          echo "✓ Drill correctly produced a failure result."
+
+      # ── Verify artifact was uploaded & contains expected files ──
+      - name: Assert artifact was uploaded (send-overflow)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          artifact_name="zeckit-e2e-logs-${{ github.run_number }}"
+          download_dir="/tmp/drill-overflow-artifacts"
+
+          echo "Downloading artifact: $artifact_name"
+          gh run download "${{ github.run_id }}" \
+            --repo "${{ github.repository }}" \
+            --name "$artifact_name" \
+            --dir  "$download_dir" \
+            || { echo "::error::Artifact '$artifact_name' was NOT uploaded. Drill failed."; exit 1; }
+
+          echo "Artifact contents:"
+          ls -lh "$download_dir/"
+
+          # Assert key diagnostic files are present
+          required_files=(
+            "run-summary.json"
+            "faucet-stats.json"
+            "faucet.log"
+            "zebra.log"
+          )
+          missing=()
+          for f in "${required_files[@]}"; do
+            if [[ ! -f "$download_dir/$f" ]]; then
+              missing+=("$f")
+            fi
+          done
+
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing expected artifact files: ${missing[*]}"
+            exit 1
+          fi
+
+          # Assert run-summary.json records the failure
+          summary_result=$(jq -r '.test_result // "missing"' "$download_dir/run-summary.json")
+          echo "run-summary.json test_result: $summary_result"
+          if [[ "$summary_result" == "pass" ]]; then
+            echo "::error::run-summary.json says 'pass' but a failure was expected."
+            exit 1
+          fi
+
+          # Show faucet balance at time of failure (most useful diagnostic)
+          echo ""
+          echo "── faucet-stats.json at time of failure ──"
+          jq . "$download_dir/faucet-stats.json" || cat "$download_dir/faucet-stats.json"
+
+          echo ""
+          echo "✓ Artifact validation passed."
+          echo "  All required files present."
+          echo "  run-summary.json correctly records test_result='$summary_result'."
+
+  # ============================================================
+  # DRILL 2 – Startup timeout (startup_timeout)
+  # ============================================================
+  drill-startup-timeout:
+    name: "Drill: startup timeout (lwd, 1 min)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    if: >
+      github.event.inputs.drill == 'both' ||
+      github.event.inputs.drill == 'startup-timeout'
+
+    outputs:
+      test_result: ${{ steps.zeckit.outputs.test_result }}
+
+    steps:
+      - name: Checkout sample repo
+        uses: actions/checkout@v4
+
+      - name: "🔴 DRILL: inject startup timeout (lwd needs 3-4 min; timeout=1 min)"
+        run: |
+          echo "::notice::Failure drill – setting startup_timeout_minutes=1 for lwd backend."
+          echo "::notice::lwd normally takes 3-4 minutes; this will time out at the health-wait step."
+          echo "::notice::Artifacts will contain partial container startup logs."
+
+      - name: ZecKit E2E – startup timeout drill
+        id: zeckit
+        uses: zecdev/ZecKit@v1
+        with:
+          backend:                 lwd
+          startup_timeout_minutes: '1'      # << INJECTED FAILURE (lwd needs ~3-4 min)
+          block_wait_seconds:      '75'
+          send_amount:             '0.05'
+          send_memo:               'Failure drill – startup timeout'
+          upload_artifacts:        always   # capture partial startup logs
+          ghcr_token:              ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Assert E2E reported failure (startup timeout)
+        shell: bash
+        run: |
+          result="${{ steps.zeckit.outputs.test_result }}"
+          echo "test_result from action: ${result:-<empty – expected on startup failure>}"
+          # On startup failure, the action exits before writing test_result.
+          # Both empty AND 'fail' are acceptable here.
+          if [[ "$result" == "pass" ]]; then
+            echo "::error::Drill BROKEN: action reported 'pass' when startup should have timed out."
+            echo "::error::Either lwd starts faster than 1 minute (unlikely) or the timeout is not enforced."
+            exit 1
+          fi
+          echo "✓ Drill correctly produced a non-pass result (result='${result:-<empty>}')."
+
+      - name: Assert artifact was uploaded (startup-timeout)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The action uploads on 'always'; find the artifact by
+          # run number (there may be multiple from the same run).
+          artifact_name="zeckit-e2e-logs-${{ github.run_number }}"
+          download_dir="/tmp/drill-startup-artifacts"
+
+          echo "Downloading artifact: $artifact_name"
+          gh run download "${{ github.run_id }}" \
+            --repo "${{ github.repository }}" \
+            --name "$artifact_name" \
+            --dir  "$download_dir" \
+            || { echo "::error::Artifact '$artifact_name' was NOT uploaded. Drill failed."; exit 1; }
+
+          echo "Artifact contents:"
+          ls -lh "$download_dir/"
+
+          # On a startup failure the service logs are the key output.
+          # At minimum containers.log and at least one service log must exist.
+          if [[ ! -f "$download_dir/containers.log" ]]; then
+            echo "::error::containers.log missing from artifact – artifact collection is broken."
+            exit 1
+          fi
+
+          # Dump the partial lightwalletd log so humans can see
+          # exactly how far startup got before the timeout.
+          echo ""
+          echo "── lightwalletd.log (partial startup) ──"
+          head -60 "$download_dir/lightwalletd.log" 2>/dev/null \
+            || echo "(not present – container may not have started)"
+
+          echo ""
+          echo "── zebra.log (first 40 lines) ──"
+          head -40 "$download_dir/zebra.log" 2>/dev/null \
+            || echo "(not present)"
+
+          echo ""
+          echo "✓ Artifact validation passed (startup-timeout drill)."
+
+  # ============================================================
+  # DRILL GATE – report both drills in one summary
+  # ============================================================
+  drill-gate:
+    name: "Drill Gate"
+    needs: [drill-send-overflow, drill-startup-timeout]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Evaluate drill results
+        shell: bash
+        run: |
+          overflow="${{ needs.drill-send-overflow.result }}"
+          startup="${{ needs.drill-startup-timeout.result }}"
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  Failure Drill Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  drill-send-overflow    : $overflow"
+          echo "  drill-startup-timeout  : $startup"
+          echo ""
+          echo "  (jobs use continue-on-error – 'failure' here means the"
+          echo "   assert step found a problem with artifact collection,"
+          echo "   not that the E2E itself failed as expected)"
+
+          {
+            echo "## Failure Drill Results"
+            echo ""
+            echo "| Drill | Job outcome | Contract |"
+            echo "|---|---|---|"
+            echo "| send-overflow | $overflow | E2E must fail; artifacts must be uploaded |"
+            echo "| startup-timeout | $startup | E2E must fail; partial logs must be uploaded |"
+            echo ""
+            echo "_Jobs use \`continue-on-error: true\`. A 'failure' result means the"
+            echo "artifact-assertion step detected a problem — not just that E2E failed as intended._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$overflow" == "failure" || "$startup" == "failure" ]]; then
+            echo "::error::One or more drill assertion steps failed."
+            exit 1
+          fi
+
+          echo "✓ Drill gate complete."

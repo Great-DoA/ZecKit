@@ -172,7 +172,7 @@ pub async fn execute(backend: String, fresh: bool) -> Result<()> {
         Ok(addr) => {
             println!("✓ Faucet wallet address: {}", addr);
             if addr != DEFAULT_FAUCET_ADDRESS {
-                println!("{}", format!("⚠ Warning: Address mismatch!").yellow());
+                println!("{}", "⚠ Warning: Address mismatch!".to_string().yellow());
                 println!("{}", format!("  Expected: {}", DEFAULT_FAUCET_ADDRESS).yellow());
                 println!("{}", format!("  Got:      {}", addr).yellow());
                 println!("{}", "  This may cause funds to be lost!".yellow());
